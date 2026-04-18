@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Ndangiranet{% endblock %} — Find homes &amp; workers in Rwanda</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <style>
+    /* ── auth errors ── */
+    .auth-error  { font-size:12px; color:#A32D2D; background:#FCEBEB; border-radius:7px; padding:8px 12px; margin-bottom:10px; display:none; }
+    .auth-error.show { display:block; }
+    .auth-success{ font-size:12px; color:var(--gt); background:var(--gl);   border-radius:7px; padding:8px 12px; margin-bottom:10px; display:none; }
+    .auth-success.show { display:block; }
+    .form-group input.invalid { border-color:#E24B4A; }
+
+    /* ── nav search bar ── */
+    .nav-search-wrap {
+      position:relative; flex:1; max-width:520px; min-width:160px;
+    }
+    .nav-search {
+      display:flex; align-items:center;
+      background:var(--bg2); border:0.5px solid var(--bdr2);
+      border-radius:22px; padding:0 6px 0 14px;
+      height:38px; gap:4px; width:100%;
+      transition:border-color .2s, background .2s;
+      cursor:text;
+    }
+    .nav-search:focus-within,
+    .nav-search-wrap:hover .nav-search { border-color:var(--g); background:var(--bg1); }
+    .nav-search input {
+      flex:1; border:none; background:transparent; font-size:13px;
+      color:var(--t1); font-family:inherit; outline:none; min-width:0;
+    }
+    .nav-search input::placeholder { color:var(--t3); }
+    .nav-search-btn {
+      width:30px; height:30px; border-radius:50%; border:none;
+      background:var(--g); color:#fff; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    }
+    .nav-search-btn:hover { background:var(--gd); }
+
+    /* ── search filter dropdown (shown on hover/focus) ── */
+    .search-filters {
+      display:none; position:absolute; top:calc(100% + 6px); left:0; right:0;
+      background:var(--bg1); border:0.5px solid var(--bdr2);
+      border-radius:14px; padding:14px 16px; z-index:150;
+    }
+    .nav-search-wrap:hover .search-filters,
+    .nav-search-wrap:focus-within .search-filters { display:block; }
+    .sf-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; align-items:center; }
+    .sf-row:last-child { margin-bottom:0; }
+    .sf-label { font-size:11px; color:var(--t2); min-width:52px; font-weight:500; }
+    .sf-chip {
+      font-size:12px; padding:4px 12px; border-radius:14px;
+      border:0.5px solid var(--bdr2); background:transparent;
+      color:var(--t2); cursor:pointer; font-family:inherit; transition:all .15s;
+      white-space:nowrap;
+    }
+    .sf-chip:hover { background:var(--bg2); color:var(--t1); }
+    .sf-chip.on { background:var(--gl); border-color:var(--g); color:var(--gt); font-weight:500; }
+    .sf-divider { height:0.5px; background:var(--bdr); margin:10px 0; }
+    .sf-actions { display:flex; justify-content:space-between; align-items:center; }
+    .sf-clear { font-size:12px; color:var(--t2); cursor:pointer; background:none; border:none; font-family:inherit; }
+    .sf-clear:hover { color:var(--t1); }
+    .sf-go { font-size:12px; padding:6px 18px; border-radius:8px; border:none;
+             background:var(--g); color:#fff; cursor:pointer; font-family:inherit; font-weight:500; }
+    .sf-go:hover { background:var(--gd); }
+
+    /* ── right-side icon buttons ── */
+    .nav-icon-btn {
+      width:34px; height:34px; border-radius:8px;
+      border:0.5px solid var(--bdr2); background:transparent;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      color:var(--t2); position:relative; text-decoration:none; flex-shrink:0;
+    }
+    .nav-icon-btn:hover { background:var(--bg2); }
+    .nav-dot { position:absolute; top:5px; right:5px; width:7px; height:7px;
+               border-radius:50%; background:#E24B4A; border:2px solid var(--bg1); display:none; }
+    .nav-dot.show { display:block; }
+
+    /* ── dark mode toggle ── */
+    .dm-toggle { width:42px; height:24px; border-radius:12px; border:0.5px solid var(--bdr2);
+                 background:var(--bg2); cursor:pointer; position:relative; padding:0; flex-shrink:0; }
+    .dm-knob   { width:18px; height:18px; border-radius:50%; background:var(--g);
+                 position:absolute; top:2px; left:3px; transition:left .2s; }
+    body.dark .dm-knob { left:21px; }
+
+    /* ── lang cycle ── */
+    .lang-cycle {
+      font-size:11px; font-weight:600; letter-spacing:.5px;
+      padding:0 10px; height:28px; border-radius:6px;
+      border:0.5px solid var(--bdr2); background:transparent;
+      color:var(--t1); cursor:pointer; font-family:inherit; flex-shrink:0;
+    }
+    .lang-cycle:hover { background:var(--bg2); }
+
+    /* ── profile avatar dropdown ── */
+    .profile-wrap { position:relative; flex-shrink:0; }
+    .profile-av {
+      width:34px; height:34px; border-radius:50%;
+      background:var(--gl); color:var(--gt);
+      display:flex; align-items:center; justify-content:center;
+      font-size:12px; font-weight:600; cursor:pointer;
+      border:0.5px solid var(--bdr2); flex-shrink:0; user-select:none;
+    }
+    .profile-av:hover { border-color:var(--g); }
+    .profile-dropdown {
+      display:none; position:absolute; top:calc(100% + 8px); right:0;
+      background:var(--bg1); border:0.5px solid var(--bdr2);
+      border-radius:12px; min-width:200px; overflow:hidden; z-index:200;
+    }
+    .profile-dropdown.open { display:block; }
+    .profile-dd-head {
+      padding:14px 16px; border-bottom:0.5px solid var(--bdr);
+      display:flex; align-items:center; gap:10px;
+    }
+    .profile-dd-av {
+      width:40px; height:40px; border-radius:50%;
+      background:var(--gl); color:var(--gt);
+      display:flex; align-items:center; justify-content:center;
+      font-size:14px; font-weight:600; flex-shrink:0;
+    }
+    .profile-dd-name  { font-size:13px; font-weight:500; color:var(--t1); }
+    .profile-dd-role  { font-size:11px; color:var(--t2); margin-top:1px; }
+    .profile-dd-item {
+      display:flex; align-items:center; gap:10px;
+      padding:11px 16px; font-size:13px; color:var(--t2);
+      text-decoration:none; cursor:pointer; border:none;
+      background:transparent; width:100%; font-family:inherit;
+      text-align:left;
+    }
+    .profile-dd-item:hover { background:var(--bg2); color:var(--t1); }
+    .profile-dd-item svg { flex-shrink:0; }
+    .profile-dd-divider { height:0.5px; background:var(--bdr); margin:4px 0; }
+    .profile-dd-signout { color:#A32D2D; }
+    .profile-dd-signout:hover { background:#FCEBEB; color:#A32D2D; }
+
+    /* ── floating chat ── */
+    .chat-fab {
+      position:fixed; bottom:24px; right:24px; width:52px; height:52px;
+      border-radius:50%; background:var(--g); color:#fff; border:none;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      z-index:90; text-decoration:none; transition:background .15s;
+    }
+    .chat-fab:hover { background:var(--gd); }
+    .chat-fab-badge {
+      position:absolute; top:2px; right:2px; min-width:16px; height:16px;
+      border-radius:8px; background:#E24B4A; border:2px solid var(--bg1);
+      font-size:9px; color:#fff; display:none; align-items:center;
+      justify-content:center; font-weight:600; padding:0 3px;
+    }
+
+    /* ── footer ── */
+    .footer { background:var(--bg1); border-top:0.5px solid var(--bdr2); padding:36px 20px 22px; margin-top:52px; }
+    .footer-grid { max-width:940px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:28px 36px; margin-bottom:28px; }
+    .footer-col-title { font-size:11px; font-weight:700; color:var(--t1); margin-bottom:12px; text-transform:uppercase; letter-spacing:.8px; }
+    .footer-col a { display:block; font-size:13px; color:var(--t2); text-decoration:none; margin-bottom:8px; line-height:1.4; }
+    .footer-col a:hover { color:var(--g); }
+    .footer-bottom { max-width:940px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding-top:20px; border-top:0.5px solid var(--bdr); }
+    .footer-logo { font-size:16px; font-weight:700; color:var(--g); display:flex; align-items:center; gap:7px; }
+    /* NDANGIRA=green, NET=dark in light mode / white in dark mode */
+    .logo-net { color:#111312; }
+    body.dark .logo-net { color:#e6ede8; }
+    .footer-copy { font-size:12px; color:var(--t3); }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body class="light" id="body">
+
+<!-- ── NAV ── -->
+<nav class="nav" style="height:56px;gap:12px;">
+  <!-- Logo -->
+  <a href="{{ url_for('index') }}" class="logo" style="margin-right:10px;flex-shrink:0;gap:9px;text-decoration:none;display:flex;align-items:center">
+    <!-- N icon mark -->
+    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+      <rect width="30" height="30" rx="8" fill="#1D9E75"/>
+      <path d="M8 21V9l8 9.5V9M22 9v12" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <!-- Two-tone wordmark: NDANGIRA green, NET adapts to theme -->
+    <span style="font-size:16px;font-weight:800;letter-spacing:-.4px;line-height:1;white-space:nowrap">
+      <span style="color:#1D9E75">NDANGIRA</span><span class="logo-net">NET</span>
+    </span>
+  </a>
+
+  <!-- Nav links (desktop) -->
+  <div class="nav-links" style="gap:0;flex-shrink:0">
+    <a class="nav-link {% if request.endpoint=='index' %}active{% endif %}" href="{{ url_for('index') }}" data-i18n="nav_home">Home</a>
+    <a class="nav-link {% if request.endpoint=='houses' or request.endpoint=='house_detail' %}active{% endif %}" href="{{ url_for('houses') }}" data-i18n="nav_houses">Houses</a>
+    <a class="nav-link {% if request.endpoint=='workers' or request.endpoint=='worker_profile' %}active{% endif %}" href="{{ url_for('workers') }}" data-i18n="nav_workers">Workers</a>
+    <a class="nav-link {% if request.endpoint=='employer_dashboard' %}active{% endif %}" href="{{ url_for('employer_dashboard') }}" data-i18n="nav_employer">Employer</a>
+    <a class="nav-link {% if request.endpoint=='worker_dashboard' %}active{% endif %}" href="{{ url_for('worker_dashboard') }}" data-i18n="nav_worker">Worker</a>
+    <a class="nav-link {% if request.endpoint=='about' %}active{% endif %}" href="{{ url_for('about') }}" data-i18n="nav_about">About</a>
+  </div>
+
+  <!-- ── Search bar — extended with filter dropdown on hover ── -->
+  <div class="nav-search-wrap" id="nav-search-wrap">
+    <div class="nav-search">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--t3)" stroke-width="1.6" style="flex-shrink:0">
+        <circle cx="6.5" cy="6.5" r="5"/><path d="m10.5 10.5 4 4"/>
+      </svg>
+      <input id="nav-search-input" type="text" autocomplete="off" name="nav-search"
+             placeholder="Search houses, workers, locations…"
+             onkeydown="handleNavSearch(event)"
+             autocomplete="off">
+      <button class="nav-search-btn" onclick="doNavSearch()" title="Search">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="2">
+          <circle cx="5.5" cy="5.5" r="4.5"/><path d="m9 9 4 4"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Filter dropdown — appears on hover or focus -->
+    <div class="search-filters" id="search-filters">
+      <div class="sf-row">
+        <span class="sf-label">Type</span>
+        <button class="sf-chip on" data-group="type" data-val="houses" onclick="toggleSfChip(this)">Houses</button>
+        <button class="sf-chip"    data-group="type" data-val="workers" onclick="toggleSfChip(this)">Workers</button>
+        <button class="sf-chip"    data-group="type" data-val="both" onclick="toggleSfChip(this)">Both</button>
+      </div>
+      <div class="sf-divider"></div>
+      <div class="sf-row">
+        <span class="sf-label">Area</span>
+        <button class="sf-chip" data-group="loc" data-val="Kigali"  onclick="toggleSfChip(this)">Kigali</button>
+        <button class="sf-chip" data-group="loc" data-val="Musanze" onclick="toggleSfChip(this)">Musanze</button>
+        <button class="sf-chip" data-group="loc" data-val="Huye"    onclick="toggleSfChip(this)">Huye</button>
+        <button class="sf-chip" data-group="loc" data-val="Rubavu"  onclick="toggleSfChip(this)">Rubavu</button>
+      </div>
+      <div class="sf-row">
+        <span class="sf-label">Price</span>
+        <button class="sf-chip" data-group="price" data-val="25000"  onclick="toggleSfChip(this)">Under 25k</button>
+        <button class="sf-chip" data-group="price" data-val="50000"  onclick="toggleSfChip(this)">Under 50k</button>
+        <button class="sf-chip" data-group="price" data-val="80000"  onclick="toggleSfChip(this)">Under 80k</button>
+        <button class="sf-chip" data-group="price" data-val="120000" onclick="toggleSfChip(this)">Under 120k</button>
+      </div>
+      <div class="sf-row">
+        <span class="sf-label">More</span>
+        <button class="sf-chip" data-group="flag" data-val="avail"    onclick="toggleSfChip(this)">Available only</button>
+        <button class="sf-chip" data-group="flag" data-val="verified" onclick="toggleSfChip(this)">Verified workers</button>
+        <button class="sf-chip" data-group="flag" data-val="top"      onclick="toggleSfChip(this)">Top rated</button>
+      </div>
+      <div class="sf-divider"></div>
+      <div class="sf-actions">
+        <button class="sf-clear" onclick="clearFilters()">Clear filters</button>
+        <button class="sf-go" onclick="doNavSearch()">Search</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Right controls ── -->
+  <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0">
+
+    <!-- Language cycle button -->
+    <button class="lang-cycle" id="lang-btn" onclick="cycleLang()" title="Switch language">EN</button>
+
+    <!-- Dark / light toggle -->
+    <button class="dm-toggle" onclick="toggleTheme()" title="Dark / light mode"><div class="dm-knob"></div></button>
+
+    <!-- Notifications bell -->
+    <a class="nav-icon-btn" href="{{ url_for('notifications') }}" title="Notifications">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M8 1a5 5 0 0 1 5 5v3l1.5 2.5H1.5L3 9V6a5 5 0 0 1 5-5z"/>
+        <path d="M6.5 14a1.5 1.5 0 0 0 3 0"/>
+      </svg>
+      <span class="nav-dot" id="notif-dot"></span>
+    </a>
+
+    <!-- Profile avatar (logged out → user icon; logged in → initials + dropdown) -->
+    <div class="profile-wrap" id="profile-wrap">
+      <div id="auth-loggedout">
+        <button class="nav-icon-btn" onclick="openAuth('login')" title="Sign in" style="border-radius:50%">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+        </button>
+      </div>
+      <div id="auth-loggedin" style="display:none">
+        <div class="profile-av" id="nav-avatar" onclick="toggleProfileMenu()" title="My profile">?</div>
+        <div class="profile-dropdown" id="profile-dropdown">
+          <div class="profile-dd-head">
+            <div class="profile-dd-av" id="dd-avatar">?</div>
+            <div>
+              <div class="profile-dd-name" id="dd-name">—</div>
+              <div class="profile-dd-role" id="dd-role">—</div>
+            </div>
+          </div>
+          <a class="profile-dd-item" href="{{ url_for('worker_dashboard') }}">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+            My profile
+          </a>
+          <a class="profile-dd-item" href="{{ url_for('post_house_page') }}">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 6.5 8 2l6 4.5V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6.5z"/><path d="M6 15V9h4v6"/></svg>
+            Post a house
+          </a>
+          <a class="profile-dd-item" href="{{ url_for('employer_dashboard') }}">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="6" width="12" height="8" rx="1"/><path d="M5 6V4a3 3 0 0 1 6 0v2"/></svg>
+            My listings
+          </a>
+          <a class="profile-dd-item" href="{{ url_for('notifications') }}">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1a5 5 0 0 1 5 5v3l1.5 2.5H1.5L3 9V6a5 5 0 0 1 5-5z"/><path d="M6.5 14a1.5 1.5 0 0 0 3 0"/></svg>
+            Notifications
+          </a>
+          <a class="profile-dd-item" href="{{ url_for('messages') }}">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 3H2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h3l3 3 3-3h3a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1z"/></svg>
+            Messages
+          </a>
+          <div class="profile-dd-divider"></div>
+          <button class="profile-dd-item profile-dd-signout" onclick="doLogout()">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3M10 11l4-4-4-4M14 8H6"/></svg>
+            Sign out
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+<!-- ── PAGE CONTENT ── -->
+<main>{% block content %}{% endblock %}</main>
+
+<!-- ── FOOTER ── -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-col">
+      <div class="footer-col-title" data-i18n="ft_housing">Housing</div>
+      <a href="{{ url_for('houses') }}" data-i18n="ft_browse_houses">Browse houses</a>
+      <a href="{{ url_for('post_house_page') }}" data-i18n="ft_post_house">Post a listing</a>
+      <a href="{{ url_for('employer_dashboard') }}" data-i18n="ft_my_listings">My listings</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title" data-i18n="ft_workers">Workers</div>
+      <a href="{{ url_for('workers') }}" data-i18n="ft_find_workers">Find workers</a>
+      <a href="{{ url_for('worker_dashboard') }}" data-i18n="ft_worker_dash">Worker dashboard</a>
+      <a href="{{ url_for('worker_profile', wid=1) }}" data-i18n="ft_profiles">View profiles</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title" data-i18n="ft_account">Account</div>
+      <a href="#" onclick="openAuth('login')" data-i18n="ft_signin">Sign in</a>
+      <a href="#" onclick="openAuth('signup')" data-i18n="ft_join">Create profile</a>
+      <a href="{{ url_for('notifications') }}" data-i18n="ft_notifs">Notifications</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title" data-i18n="ft_info">Info</div>
+      <a href="{{ url_for('about') }}" data-i18n="ft_about">About Ndangiranet</a>
+      <a href="{{ url_for('help_page') }}" data-i18n="ft_help">Help &amp; FAQ</a>
+      <a href="{{ url_for('messages') }}" data-i18n="ft_messages">Messages</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-logo">
+      <svg width="22" height="22" viewBox="0 0 30 30" fill="none"><rect width="30" height="30" rx="8" fill="#1D9E75"/><path d="M8 21V9l8 9.5V9M22 9v12" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span><span style="color:#1D9E75">NDANGIRA</span><span class="logo-net">NET</span></span>
+    </div>
+    <div class="footer-copy" data-i18n="ft_copy">&copy; 2026 Ndangiranet. Made for Rwanda.</div>
+  </div>
+</footer>
+
+<!-- ── FLOATING CHAT BUTTON ── -->
+<a href="{{ url_for('messages') }}" class="chat-fab" title="Open messages">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+  <span class="chat-fab-badge" id="chat-badge" style="display:none">3</span>
+</a>
+
+<!-- ── AUTH MODAL ── -->
+<div id="modal-auth" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal-box" style="max-width:420px">
+
+    <!-- LOGIN VIEW -->
+    <div id="auth-login-view">
+      <div class="modal-header">
+        <div class="modal-title" data-i18n="login_title">Sign in to Ndangiranet</div>
+        <button class="modal-close" onclick="document.getElementById('modal-auth').classList.add('hidden')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="auth-error" id="login-error"></div>
+        <div class="auth-success" id="login-success"></div>
+        <div class="form-group">
+          <label data-i18n="label_phone">Phone number or email</label>
+          <input type="text" id="login-phone" placeholder="+250 788 000 000" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_password">Password</label>
+          <input type="password" id="login-password" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+        <div style="font-size:12px;color:var(--g);cursor:pointer;margin-bottom:4px" onclick="showForgotPassword()" data-i18n="forgot_pw">Forgot password?</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="document.getElementById('modal-auth').classList.add('hidden')" data-i18n="btn_cancel">Cancel</button>
+        <button class="btn btn-primary" onclick="doLogin()" data-i18n="btn_signin">Sign in</button>
+      </div>
+      <div style="text-align:center;font-size:12px;color:var(--t2);padding:0 18px 16px">
+        <span data-i18n="no_account">No account?</span>
+        <span style="color:var(--g);cursor:pointer;margin-left:4px" onclick="switchAuthView('signup')" data-i18n="join_free">Join free</span>
+      </div>
+    </div>
+
+    <!-- SIGNUP VIEW -->
+    <div id="auth-signup-view" style="display:none">
+      <div class="modal-header">
+        <div class="modal-title" data-i18n="signup_title">Create your profile</div>
+        <button class="modal-close" onclick="document.getElementById('modal-auth').classList.add('hidden')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="auth-error" id="signup-error"></div>
+        <div class="role-selector">
+          <button class="role-btn" id="role-employer" onclick="selectRole('employer')" data-i18n="role_employer">I'm an employer</button>
+          <button class="role-btn" id="role-worker"   onclick="selectRole('worker')"   data-i18n="role_worker">I'm a worker</button>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label data-i18n="label_name">Full name</label>
+            <input type="text" id="signup-name" placeholder="Diane Uwimana" autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label data-i18n="label_age">Age</label>
+            <input type="number" id="signup-age" placeholder="28" min="16" max="99" autocomplete="off">
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_phone">Phone number</label>
+          <input type="text" id="signup-phone" placeholder="+250 788 000 000" autocomplete="tel">
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_location">Location</label>
+          <select id="signup-loc">
+            <option>Gasabo, Kigali</option><option>Kicukiro, Kigali</option>
+            <option>Nyarugenge, Kigali</option><option>Musanze</option>
+            <option>Huye</option><option>Rubavu</option>
+          </select>
+        </div>
+        <div class="form-group" id="skills-section" style="display:none">
+          <label data-i18n="label_skills">Your skills</label>
+          <div class="skills-grid" style="margin-top:6px" id="skills-grid">
+            {% for skill in ["House commissioning","House maid","Guard (Umuzamu)","Driver","Plumber","Welder","Carpenter","Gardener","Cleaner","Laundry helper"] %}
+              <button type="button" class="skill-chip" onclick="this.classList.toggle('selected')">{{ skill }}</button>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_password">Password</label>
+          <input type="password" id="signup-password" placeholder="Create a password" autocomplete="new-password" onkeydown="if(event.key==='Enter')doSignup()">
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_confirm_pw">Confirm password</label>
+          <input type="password" id="signup-password2" placeholder="Repeat password" autocomplete="new-password" onkeydown="if(event.key==='Enter')doSignup()">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="document.getElementById('modal-auth').classList.add('hidden')" data-i18n="btn_cancel">Cancel</button>
+        <button class="btn btn-primary" onclick="doSignup()" data-i18n="btn_create">Create profile</button>
+      </div>
+      <div style="text-align:center;font-size:12px;color:var(--t2);padding:0 18px 16px">
+        <span data-i18n="have_account">Already have an account?</span>
+        <span style="color:var(--g);cursor:pointer;margin-left:4px" onclick="switchAuthView('login')" data-i18n="btn_signin">Sign in</span>
+      </div>
+    </div>
+
+    <!-- FORGOT PASSWORD VIEW -->
+    <div id="auth-forgot-view" style="display:none">
+      <div class="modal-header">
+        <div class="modal-title" data-i18n="forgot_title">Reset your password</div>
+        <button class="modal-close" onclick="document.getElementById('modal-auth').classList.add('hidden')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="auth-success" id="forgot-success"></div>
+        <div class="auth-error"   id="forgot-error"></div>
+        <p style="font-size:13px;color:var(--t2);margin-bottom:14px" data-i18n="forgot_desc">Enter your phone number or email and we'll send you a reset code.</p>
+        <div class="form-group">
+          <label data-i18n="label_phone">Phone or email</label>
+          <input type="text" id="forgot-phone" placeholder="+250 788 000 000" autocomplete="off" name="forgot-ph">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="switchAuthView('login')" data-i18n="btn_back">Back</button>
+        <button class="btn btn-primary" onclick="doForgot()" data-i18n="btn_send_code">Send reset code</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── SHARED JS ── -->
+<script>
+// ── theme ──────────────────────────────────────────────────────────────────
+(function(){
+  const t = localStorage.getItem("sv_theme") || "light";
+  document.getElementById("body").className = t;
+})();
+function toggleTheme(){
+  const b = document.getElementById("body");
+  const next = b.classList.contains("dark") ? "light" : "dark";
+  b.className = next;
+  localStorage.setItem("sv_theme", next);
+}
+
+// ── translations ────────────────────────────────────────────────────────────
+const LANGS = ["en","rw","fr"];
+const LABELS = { en:"EN", rw:"RW", fr:"FR" };
+const T = {
+  en: {
+    nav_home:"Home", nav_houses:"Houses", nav_workers:"Workers",
+    nav_messages:"Messages", nav_employer:"Employer", nav_worker:"Worker",
+    nav_about:"About", nav_help:"Help", nav_notifs:"Notifications",
+    btn_signin:"Sign in", btn_join:"Join free", btn_logout:"Sign out",
+    btn_post:"+ Post house", btn_cancel:"Cancel", btn_create:"Create profile",
+    btn_back:"Back", btn_send_code:"Send reset code",
+    login_title:"Sign in to Ndangiranet", signup_title:"Create your profile",
+    forgot_title:"Reset your password", forgot_desc:"Enter your phone number or email and we'll send you a reset code.",
+    forgot_pw:"Forgot password?", no_account:"No account?", join_free:"Join free",
+    have_account:"Already have an account?",
+    label_phone:"Phone or email", label_password:"Password",
+    label_confirm_pw:"Confirm password", label_name:"Full name",
+    label_age:"Age", label_location:"Location", label_skills:"Your skills",
+    role_employer:"I'm an employer", role_worker:"I'm a worker",
+    hero_title:"Find your next affordable home in Rwanda",
+    hero_sub:"Browse verified listings posted by real landlords near you.",
+    ft_housing:"Housing", ft_browse_houses:"Browse houses", ft_post_house:"Post a listing",
+    ft_my_listings:"My listings", ft_workers:"Workers", ft_find_workers:"Find workers",
+    ft_worker_dash:"Worker dashboard", ft_profiles:"View profiles",
+    ft_account:"Account", ft_signin:"Sign in", ft_join:"Create profile",
+    ft_notifs:"Notifications", ft_info:"Info", ft_about:"About Ndangiranet",
+    ft_help:"Help & FAQ", ft_messages:"Messages", ft_copy:"© 2026 Ndangiranet. Made for Rwanda.",
+    page_houses:"House listings", page_workers:"Find workers",
+    filter_any_price:"Any price", filter_all_areas:"All areas",
+    filter_avail:"Available only", filter_verified:"Verified only", filter_top:"Top rated",
+    btn_search:"Search", label_title:"Title", label_rent:"Monthly rent (RWF)",
+    label_bedrooms:"Bedrooms", label_desc:"Description", label_features:"Included features",
+    btn_publish:"Publish listing", search_placeholder:"Search houses, workers…",
+  },
+  rw: {
+    nav_home:"Ahabanza", nav_houses:"Inzu", nav_workers:"Abakozi",
+    nav_messages:"Ubutumwa", nav_employer:"Umukoresha", nav_worker:"Umukozi",
+    nav_about:"Ibyerekeye", nav_help:"Ubufasha", nav_notifs:"Inkuru",
+    btn_signin:"Injira", btn_join:"Iyandikishe", btn_logout:"Sohoka",
+    btn_post:"+ Ohereza inzu", btn_cancel:"Reka", btn_create:"Fungura konti",
+    btn_back:"Subira", btn_send_code:"Ohereza kode",
+    login_title:"Injira kuri Ndangiranet", signup_title:"Fungura profil yawe",
+    forgot_title:"Hindura ijambo banga ryawe", forgot_desc:"Andika nimero ya telefone cyangwa imeyili yawe, tukuohereze kode yo gusubiramo.",
+    forgot_pw:"Wibagiwe ijambo banga?", no_account:"Nta konti ufite?", join_free:"Iyandikishe",
+    have_account:"Usanzwe ufite konti?",
+    label_phone:"Telefone cyangwa imeyili", label_password:"Ijambo banga",
+    label_confirm_pw:"Powtora ijambo banga", label_name:"Amazina yose",
+    label_age:"Imyaka", label_location:"Ahabona", label_skills:"Ubuhanga bwawe",
+    role_employer:"Ndi umukoresha", role_worker:"Ndi umukozi",
+    hero_title:"Shaka inzu yawe yo gukodesha mu Rwanda",
+    hero_sub:"Reba inyubako zemewe zashyizwe n'abakodesha b'ukuri hafi yawe.",
+    ft_housing:"Inzu", ft_browse_houses:"Reba inzu", ft_post_house:"Ohereza inzu",
+    ft_my_listings:"Inzu zanjye", ft_workers:"Abakozi", ft_find_workers:"Shaka abakozi",
+    ft_worker_dash:"Ikibaho cy'umukozi", ft_profiles:"Reba profili",
+    ft_account:"Konti", ft_signin:"Injira", ft_join:"Fungura profili",
+    ft_notifs:"Inkuru", ft_info:"Amakuru", ft_about:"Ibyerekeye Ndangiranet",
+    ft_help:"Ubufasha", ft_messages:"Ubutumwa", ft_copy:"© 2026 Ndangiranet. Yakozwe mu Rwanda.",
+    page_houses:"Urutonde rw'inzu", page_workers:"Shaka abakozi",
+    filter_any_price:"Igiciro cyose", filter_all_areas:"Akarere kose",
+    filter_avail:"Zibonetse gusa", filter_verified:"Emejwe gusa", filter_top:"Baguye hejuru",
+    btn_search:"Shakisha", label_title:"Umutwe", label_rent:"Igiciro (RWF/ukwezi)",
+    label_bedrooms:"Ibiturari", label_desc:"Ibisobanuro", label_features:"Ivyo birimo",
+    btn_publish:"Tanga urutonde", search_placeholder:"Shakisha inzu, abakozi…",
+  },
+  fr: {
+    nav_home:"Accueil", nav_houses:"Maisons", nav_workers:"Travailleurs",
+    nav_messages:"Messages", nav_employer:"Employeur", nav_worker:"Travailleur",
+    nav_about:"À propos", nav_help:"Aide", nav_notifs:"Notifications",
+    btn_signin:"Se connecter", btn_join:"Rejoindre", btn_logout:"Se déconnecter",
+    btn_post:"+ Publier maison", btn_cancel:"Annuler", btn_create:"Créer profil",
+    btn_back:"Retour", btn_send_code:"Envoyer le code",
+    login_title:"Connexion à Ndangiranet", signup_title:"Créez votre profil",
+    forgot_title:"Réinitialiser le mot de passe", forgot_desc:"Entrez votre numéro ou email, nous vous enverrons un code de réinitialisation.",
+    forgot_pw:"Mot de passe oublié?", no_account:"Pas de compte?", join_free:"Rejoindre gratuitement",
+    have_account:"Vous avez déjà un compte?",
+    label_phone:"Téléphone ou email", label_password:"Mot de passe",
+    label_confirm_pw:"Confirmer le mot de passe", label_name:"Nom complet",
+    label_age:"Âge", label_location:"Localisation", label_skills:"Vos compétences",
+    role_employer:"Je suis employeur", role_worker:"Je suis travailleur",
+    hero_title:"Trouvez votre prochain logement abordable au Rwanda",
+    hero_sub:"Parcourez les annonces vérifiées publiées par de vrais propriétaires près de chez vous.",
+    ft_housing:"Logement", ft_browse_houses:"Voir les maisons", ft_post_house:"Publier une annonce",
+    ft_my_listings:"Mes annonces", ft_workers:"Travailleurs", ft_find_workers:"Trouver des travailleurs",
+    ft_worker_dash:"Tableau de bord", ft_profiles:"Voir les profils",
+    ft_account:"Compte", ft_signin:"Se connecter", ft_join:"Créer profil",
+    ft_notifs:"Notifications", ft_info:"Infos", ft_about:"À propos de Ndangiranet",
+    ft_help:"Aide & FAQ", ft_messages:"Messages", ft_copy:"© 2026 Ndangiranet. Fait pour le Rwanda.",
+    page_houses:"Annonces de maisons", page_workers:"Trouver des travailleurs",
+    filter_any_price:"Tout prix", filter_all_areas:"Toutes zones",
+    filter_avail:"Disponibles uniquement", filter_verified:"Vérifiés uniquement", filter_top:"Mieux notés",
+    btn_search:"Rechercher", label_title:"Titre", label_rent:"Loyer (RWF/mois)",
+    label_bedrooms:"Chambres", label_desc:"Description", label_features:"Équipements inclus",
+    btn_publish:"Publier l'annonce", search_placeholder:"Chercher maisons, travailleurs…",
+  }
+};
+
+let currentLang = localStorage.getItem("sv_lang") || "en";
+
+function applyTranslations() {
+  const t = T[currentLang] || T.en;
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.dataset.i18n;
+    if (t[key] !== undefined) {
+      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") el.placeholder = t[key];
+      else el.textContent = t[key];
+    }
+  });
+  document.getElementById("lang-btn").textContent = LABELS[currentLang] || "EN";
+  document.documentElement.lang = currentLang;
+}
+
+function cycleLang() {
+  const idx = LANGS.indexOf(currentLang);
+  currentLang = LANGS[(idx + 1) % LANGS.length];
+  localStorage.setItem("sv_lang", currentLang);
+  applyTranslations();
+}
+
+// run on load
+applyTranslations();
+
+// ── auth state ──────────────────────────────────────────────────────────────
+const USER_KEY = "sv_user";
+
+function getUser() {
+  try { return JSON.parse(localStorage.getItem(USER_KEY)); } catch(e) { return null; }
+}
+
+function applyAuthState() {
+  const user = getUser();
+  const loggedout = document.getElementById("auth-loggedout");
+  const loggedin  = document.getElementById("auth-loggedin");
+  if (user) {
+    loggedout.style.display = "none";
+    loggedin.style.display  = "block";
+    const ini = (user.name || "?").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
+    // nav avatar
+    const navAv = document.getElementById("nav-avatar");
+    if (navAv) { navAv.textContent = ini; navAv.style.background = user.bg || "var(--gl)"; navAv.style.color = user.tc || "var(--gt)"; }
+    // dropdown head
+    const ddAv = document.getElementById("dd-avatar");
+    if (ddAv) { ddAv.textContent = ini; ddAv.style.background = user.bg || "var(--gl)"; ddAv.style.color = user.tc || "var(--gt)"; }
+    const ddName = document.getElementById("dd-name");
+    if (ddName) ddName.textContent = user.name || "";
+    const ddRole = document.getElementById("dd-role");
+    if (ddRole) ddRole.textContent = (user.role === "worker" ? "Worker" : "Employer") + " \u00b7 " + (user.loc || "");
+    // point "My profile" dropdown link to correct worker dashboard for this user
+    const profileLink = document.getElementById("dd-profile-link");
+    if (profileLink && user.role === "worker") {
+      // pass worker id if known, server will match by name+session
+      profileLink.href = "/worker-dashboard";
+    }
+    // chat badge
+    const badge = document.getElementById("chat-badge");
+    if (badge) badge.style.display = "flex";
+  } else {
+    if (loggedout) loggedout.style.display = "block";
+    if (loggedin)  loggedin.style.display  = "none";
+  }
+}
+
+// profile dropdown toggle — close on outside click
+function toggleProfileMenu() {
+  const dd = document.getElementById("profile-dropdown");
+  if (dd) dd.classList.toggle("open");
+}
+document.addEventListener("click", function(e) {
+  const wrap = document.getElementById("profile-wrap");
+  if (wrap && !wrap.contains(e.target)) {
+    const dd = document.getElementById("profile-dropdown");
+    if (dd) dd.classList.remove("open");
+  }
+});
+
+// nav search + filter chips
+function handleNavSearch(e) { if (e.key === "Enter") doNavSearch(); }
+
+function toggleSfChip(btn) {
+  const group = btn.dataset.group;
+  // single-select per group
+  document.querySelectorAll(`.sf-chip[data-group="${group}"]`).forEach(b => b.classList.remove("on"));
+  btn.classList.add("on");
+}
+
+function clearFilters() {
+  document.querySelectorAll(".sf-chip").forEach(b => b.classList.remove("on"));
+  // restore defaults
+  const housesChip = document.querySelector('.sf-chip[data-val="houses"]');
+  if (housesChip) housesChip.classList.add("on");
+  document.getElementById("nav-search-input").value = "";
+}
+
+function doNavSearch() {
+  const q     = (document.getElementById("nav-search-input").value || "").trim();
+  const type  = document.querySelector('.sf-chip[data-group="type"].on')?.dataset.val  || "houses";
+  const loc   = document.querySelector('.sf-chip[data-group="loc"].on')?.dataset.val   || "";
+  const price = document.querySelector('.sf-chip[data-group="price"].on')?.dataset.val || "";
+  const flag  = document.querySelector('.sf-chip[data-group="flag"].on')?.dataset.val  || "";
+
+  const params = new URLSearchParams();
+  if (q)     params.set("q", q);
+  if (loc)   params.set("loc", loc.toLowerCase());
+  if (price) params.set("price", price);
+  if (flag === "avail")    params.set("avail", "true");
+  if (flag === "verified") params.set("verified", "true");
+  if (flag === "top")      params.set("top", "true");
+
+  if (type === "workers") {
+    window.location.href = "/workers?" + params.toString();
+  } else if (type === "both") {
+    // go to houses with q, workers opens in second tab
+    if (q) window.open("/workers?" + params.toString(), "_blank");
+    window.location.href = "/houses?" + params.toString();
+  } else {
+    window.location.href = "/houses?" + params.toString();
+  }
+}
+
+applyAuthState();
+
+// ── auth helpers ─────────────────────────────────────────────────────────────
+function openAuth(view) {
+  document.getElementById("modal-auth").classList.remove("hidden");
+  switchAuthView(view);
+}
+
+function switchAuthView(view) {
+  ["login","signup","forgot"].forEach(v => {
+    document.getElementById("auth-"+v+"-view").style.display = v===view ? "" : "none";
+  });
+  // clear errors
+  ["login-error","login-success","signup-error","forgot-success","forgot-error"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.classList.remove("show"); el.textContent = ""; }
+  });
+}
+
+function showForgotPassword() { switchAuthView("forgot"); }
+
+function selectRole(r) {
+  document.querySelectorAll(".role-btn").forEach(b => b.classList.remove("selected"));
+  document.getElementById("role-"+r).classList.add("selected");
+  const ss = document.getElementById("skills-section");
+  if (ss) ss.style.display = r==="worker" ? "block" : "none";
+}
+
+// ── LOGIN ────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const phone = document.getElementById("login-phone").value.trim();
+  const pw    = document.getElementById("login-password").value.trim();
+  const err   = document.getElementById("login-error");
+
+  if (!phone) { showErr(err, "Please enter your phone number or email."); return; }
+  if (!pw)    { showErr(err, "Please enter your password."); return; }
+
+  // call server
+  const res = await fetch("/api/auth/login", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ phone, password: pw }),
+  });
+  const data = await res.json();
+
+  if (res.ok) {
+    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    document.getElementById("modal-auth").classList.add("hidden");
+    applyAuthState();
+  } else {
+    showErr(err, data.error || "Invalid credentials. Please try again.");
+  }
+}
+
+// ── SIGNUP ───────────────────────────────────────────────────────────────────
+async function doSignup() {
+  const name  = document.getElementById("signup-name").value.trim();
+  const age   = document.getElementById("signup-age").value.trim();
+  const phone = document.getElementById("signup-phone").value.trim();
+  const loc   = document.getElementById("signup-loc").value;
+  const pw    = document.getElementById("signup-password").value.trim();
+  const pw2   = document.getElementById("signup-password2").value.trim();
+  const err   = document.getElementById("signup-error");
+
+  const roleBtn = document.querySelector(".role-btn.selected");
+  if (!roleBtn) { showErr(err, "Please choose if you are an employer or worker."); return; }
+  const role = roleBtn.id === "role-worker" ? "worker" : "employer";
+
+  if (!name)  { showErr(err, "Please enter your full name."); return; }
+  if (!phone) { showErr(err, "Please enter your phone number."); return; }
+  if (!pw)    { showErr(err, "Please create a password."); return; }
+  if (pw !== pw2) { showErr(err, "Passwords do not match."); return; }
+  if (pw.length < 6) { showErr(err, "Password must be at least 6 characters."); return; }
+
+  const skills = role==="worker"
+    ? Array.from(document.querySelectorAll("#skills-grid .skill-chip.selected")).map(b=>b.textContent)
+    : [];
+
+  const res = await fetch("/api/auth/signup", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ name, age:parseInt(age)||0, phone, location:loc, role, skills, password:pw }),
+  });
+  const data = await res.json();
+
+  if (res.ok) {
+    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    document.getElementById("modal-auth").classList.add("hidden");
+    applyAuthState();
+  } else {
+    showErr(err, data.error || "Sign up failed. Please try again.");
+  }
+}
+
+// ── FORGOT PASSWORD ──────────────────────────────────────────────────────────
+async function doForgot() {
+  const phone = document.getElementById("forgot-phone").value.trim();
+  const err = document.getElementById("forgot-error");
+  const suc = document.getElementById("forgot-success");
+  if (!phone) { showErr(err, "Please enter your phone number or email."); return; }
+  const res = await fetch("/api/auth/forgot", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ phone }),
+  });
+  const data = await res.json();
+  if (res.ok) {
+    suc.textContent = data.message || "Reset code sent! Check your phone.";
+    suc.classList.add("show");
+  } else {
+    showErr(err, data.error || "Could not find that account.");
+  }
+}
+
+// ── LOGOUT ───────────────────────────────────────────────────────────────────
+async function doLogout() {
+  await fetch("/api/auth/logout", { method:"POST" });
+  localStorage.removeItem(USER_KEY);
+  applyAuthState();
+}
+
+function showErr(el, msg) {
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 5000);
+}
+
+// ── notification dot ─────────────────────────────────────────────────────────
+async function checkNotifDot() {
+  try {
+    const res = await fetch("/api/notifications");
+    const notifs = await res.json();
+    const dot = document.getElementById("notif-dot");
+    if (dot) dot.classList.toggle("show", notifs.some(n => n.unread));
+  } catch(e) {}
+}
+checkNotifDot();
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}{{ house.title }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:700px">
+  <div style="margin-bottom:14px">
+    <a href="{{ url_for('houses') }}" class="btn" style="font-size:12px">&larr; Back to listings</a>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <span class="badge {{ 'badge-red' if house.taken else 'badge-green' }}" style="font-size:12px">{{ 'Taken' if house.taken else 'Available' }}</span>
+    <span class="badge badge-amber" style="font-size:12px">{{ house.rooms }} bedroom{{ 's' if house.rooms > 1 }}</span>
+  </div>
+
+  <!-- Photo -->
+  <div style="width:100%;height:240px;background:var(--bg3);border-radius:12px;overflow:hidden;margin-bottom:20px;display:flex;align-items:center;justify-content:center">
+    {% if house.photo %}
+      <img src="{{ house.photo }}" style="width:100%;height:100%;object-fit:cover" alt="{{ house.title }}">
+    {% else %}
+      <svg width="64" height="64" viewBox="0 0 48 48" fill="none" stroke="var(--t3)" stroke-width="1.2">
+        <path d="M5 20 24 6l19 14V43a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V20z"/>
+        <path d="M18 44V30h12v14"/>
+      </svg>
+    {% endif %}
+  </div>
+
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+    <div>
+      <div style="font-size:26px;font-weight:600;color:var(--g)">{{ (house.price // 1000) }}k RWF/mo</div>
+      <div style="font-size:18px;font-weight:500;color:var(--t1);margin-top:4px">{{ house.title }}</div>
+      <div style="font-size:13px;color:var(--t2);margin-top:6px;display:flex;align-items:center;gap:4px">
+        <svg width="11" height="13" viewBox="0 0 10 12" fill="none" stroke="currentColor" stroke-width="1.3">
+          <circle cx="5" cy="4.5" r="2"/><path d="M5 12S1 7.5 1 4.5a4 4 0 0 1 8 0C9 7.5 5 12 5 12z"/>
+        </svg>
+        {{ house.loc }}
+      </div>
+    </div>
+    {% if not house.taken %}
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <a href="{{ url_for('messages') }}" class="btn btn-primary">DM landlord</a>
+      <button class="btn" style="color:var(--red);border-color:var(--red)" onclick="markTaken({{ house.id }})">Mark as taken</button>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Description -->
+  <div class="card" style="margin-bottom:16px">
+    <div style="font-size:14px;font-weight:500;color:var(--t1);margin-bottom:10px">Description</div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.7">{{ house.desc }}</div>
+  </div>
+
+  <!-- Features -->
+  {% if house.features %}
+  <div class="card" style="margin-bottom:16px">
+    <div style="font-size:14px;font-weight:500;color:var(--t1);margin-bottom:10px">Features</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      {% for f in house.features %}<span class="tag" style="font-size:12px;padding:4px 12px">{{ f }}</span>{% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Landlord -->
+  <div class="card" style="margin-bottom:20px">
+    <div style="font-size:14px;font-weight:500;color:var(--t1);margin-bottom:12px">Posted by</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="avatar av-md" style="background:{{ house.landlord_bg }};color:{{ house.landlord_tc }}">{{ house.landlord_ini }}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500;color:var(--t1)">{{ house.landlord }} <span class="badge badge-amber">Landlord</span></div>
+        <div style="font-size:12px;color:var(--t2);margin-top:2px">Listed this property</div>
+      </div>
+      <a href="{{ url_for('messages') }}" class="btn btn-primary">Send message</a>
+    </div>
+  </div>
+
+  <!-- Comments -->
+  <div class="card">
+    <div style="font-size:14px;font-weight:500;color:var(--t1);margin-bottom:14px">
+      Comments <span style="font-size:13px;color:var(--t2);font-weight:400">({{ house.comments|length }})</span>
+    </div>
+
+    <div id="comments-list">
+      {% if house.comments %}
+        {% for c in house.comments %}
+        <div class="comment">
+          <div class="avatar av-xs" style="background:{{ c.bg }};color:{{ c.tc }}">{{ c.ini }}</div>
+          <div class="comment-bubble">
+            <div class="comment-author">
+              {{ c.author }}
+              {% if c.is_landlord %}<span class="badge badge-amber">Landlord</span>{% endif %}
+              <span class="comment-date">{{ c.date }}</span>
+            </div>
+            <div class="comment-text">{{ c.text }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div id="no-cmts" style="font-size:13px;color:var(--t2);text-align:center;padding:12px">No comments yet. Be the first to ask!</div>
+      {% endif %}
+    </div>
+
+    {% if not house.taken %}
+    <div class="comment-input" style="margin-top:12px">
+      <div class="avatar av-xs" style="background:#E1F5EE;color:#085041">Me</div>
+      <input type="text" id="cmt-input" placeholder="Ask the landlord anything..." autocomplete="off" name="house-cmt" onkeydown="if(event.key==='Enter')postComment()">
+      <button class="btn btn-primary" onclick="postComment()">Send</button>
+    </div>
+    {% else %}
+    <div style="background:var(--bg2);border-radius:8px;padding:12px;margin-top:12px;text-align:center;font-size:13px;color:var(--t3)">
+      This house has been marked as taken.
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const HOUSE_ID = {{ house.id }};
+
+async function postComment() {
+  const inp = document.getElementById("cmt-input");
+  const txt = inp.value.trim();
+  if (!txt) return;
+  const res = await fetch(`/api/houses/${HOUSE_ID}/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ author:"You", ini:"Me", bg:"#E1F5EE", tc:"#085041", text:txt }),
+  });
+  if (res.ok) {
+    const { comment: c } = await res.json();
+    inp.value = "";
+    const nc = document.getElementById("no-cmts");
+    if (nc) nc.remove();
+    const div = document.createElement("div");
+    div.className = "comment";
+    div.innerHTML = `
+      <div class="avatar av-xs" style="background:${c.bg};color:${c.tc}">${c.ini}</div>
+      <div class="comment-bubble">
+        <div class="comment-author">${c.author}<span class="comment-date">${c.date}</span></div>
+        <div class="comment-text">${c.text}</div>
+      </div>`;
+    document.getElementById("comments-list").appendChild(div);
+  }
+}
+
+async function markTaken(id) {
+  if (!confirm("Mark this house as taken? It will be hidden from available listings.")) return;
+  const res = await fetch(`/api/houses/${id}/taken`, { method:"POST" });
+  if (res.ok) location.reload();
+}
+</script>
+{% endblock %}

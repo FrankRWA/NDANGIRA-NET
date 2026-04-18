@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Find Workers{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-title">Find workers</div>
+  <div class="filter-row">
+    <input type="text" id="search" placeholder="Name or skill..." autocomplete="off" name="worker-search" style="flex:2;min-width:140px" oninput="filterWorkers()">
+    <select id="filter-skill" onchange="filterWorkers()" style="min-width:140px">
+      <option value="">All skills</option>
+      <option>House maid</option><option>Guard (Umuzamu)</option><option>Driver</option>
+      <option>Plumber</option><option>Welder</option><option>Carpenter</option>
+      <option>Gardener</option><option>Cleaner</option>
+    </select>
+    <select id="filter-loc" onchange="filterWorkers()" style="min-width:130px">
+      <option value="">All areas</option>
+      <option value="kigali">Kigali</option><option value="musanze">Musanze</option>
+      <option value="huye">Huye</option>
+    </select>
+    <button class="chip active" id="chip-avail"     onclick="toggleChip('avail')">Available</button>
+    <button class="chip"        id="chip-verified"  onclick="toggleChip('verified')">Verified only</button>
+    <button class="chip"        id="chip-top"       onclick="toggleChip('top')">Top rated</button>
+  </div>
+  <div class="section-title">All workers <span id="count" style="font-size:12px;color:var(--t2);font-weight:400"></span></div>
+  <div class="worker-grid" id="workers-grid">
+    {% for w in workers %}
+    <a class="worker-card" href="/workers/{{ w.id }}"
+       data-name="{{ w.name|lower }}" data-skills="{{ w.skills|join(' ')|lower }}"
+       data-loc="{{ w.loc|lower }}" data-avail="{{ w.avail|lower }}"
+       data-verified="{{ w.verified|lower }}" data-rating="{{ w.rating }}">
+      {% if w.rating >= 4.8 %}<span class="badge badge-green" style="margin-bottom:8px;display:inline-block">Top rated</span>{% endif %}
+      <div class="avatar av-md" style="background:{{ w.bg }};color:{{ w.tc }};margin-bottom:10px">{{ w.ini }}</div>
+      <div style="font-size:13px;font-weight:500;color:var(--t1)">{{ w.name }}
+        {% if w.verified %}<span class="verified-badge"><svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="#185FA5" stroke-width="1.6"><path d="M1.5 5l2.5 3 5-6"/></svg></span>{% endif %}
+      </div>
+      <div style="font-size:11px;color:var(--t2);margin:2px 0 4px">{{ w.role }}</div>
+      <div style="font-size:11px;color:var(--t3);margin-bottom:5px">{{ w.loc }}</div>
+      <div style="font-size:12px;color:#EF9F27">{{ '★' * (w.rating|round|int) }}{{ '☆' * (5-(w.rating|round|int)) }} <span style="color:var(--t2);font-size:11px">{{ w.rating }} ({{ w.review_count }})</span></div>
+      <div class="tags">{% for s in w.skills %}<span class="tag">{{ s }}</span>{% endfor %}</div>
+      <div style="font-size:11px;color:{{ 'var(--g)' if w.avail else 'var(--t3)' }};margin-top:7px">
+        {% if w.avail %}<span class="avail-dot"></span> Available{% else %}Not available{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const chips = { avail:true, verified:false, top:false };
+function toggleChip(key) {
+  chips[key] = !chips[key];
+  document.getElementById("chip-"+key).classList.toggle("active", chips[key]);
+  filterWorkers();
+}
+function filterWorkers() {
+  const q    = document.getElementById("search").value.toLowerCase();
+  const sk   = document.getElementById("filter-skill").value.toLowerCase();
+  const loc  = document.getElementById("filter-loc").value.toLowerCase();
+  const cards = document.querySelectorAll("#workers-grid .worker-card");
+  let vis = 0;
+  cards.forEach(c => {
+    let show = true;
+    if (q   && !c.dataset.name.includes(q) && !c.dataset.skills.includes(q)) show=false;
+    if (sk  && !c.dataset.skills.includes(sk)) show=false;
+    if (loc && !c.dataset.loc.includes(loc))   show=false;
+    if (chips.avail    && c.dataset.avail    !== "true")  show=false;
+    if (chips.verified && c.dataset.verified !== "true")  show=false;
+    if (chips.top      && parseFloat(c.dataset.rating) < 4.7) show=false;
+    c.style.display = show ? "" : "none";
+    if (show) vis++;
+  });
+  document.getElementById("count").textContent = "("+vis+")";
+}
+filterWorkers();
+// pre-fill from nav search bar + filter params
+(function(){
+  const p = new URLSearchParams(window.location.search);
+  if (p.get("q"))       { document.getElementById("search").value = p.get("q"); }
+  if (p.get("loc"))     { const s=document.getElementById("filter-loc"); if(s) for(let o of s.options) if(o.value.toLowerCase()===p.get("loc").toLowerCase()){s.value=o.value;break;} }
+  if (p.get("verified")==="true") { chips.verified=true; document.getElementById("chip-verified")?.classList.add("active"); }
+  if (p.get("top")==="true")      { chips.top=true;      document.getElementById("chip-top")?.classList.add("active"); }
+  if (p.get("avail")==="true")    { chips.avail2=true;   document.getElementById("chip-avail2")?.classList.add("active"); }
+  filterWorkers();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Worker Dashboard{% endblock %}
+{% block head %}
+<style>
+.pfp-wrap { position:relative; display:inline-block; cursor:pointer; }
+.pfp-wrap:hover .pfp-edit-overlay { opacity:1; }
+.pfp-edit-overlay {
+  position:absolute; inset:0; border-radius:50%;
+  background:rgba(0,0,0,0.45); display:flex; flex-direction:column;
+  align-items:center; justify-content:center; opacity:0; transition:opacity .2s;
+  gap:3px;
+}
+.pfp-edit-overlay svg { display:block; }
+.pfp-edit-overlay span { font-size:9px; color:#fff; font-weight:600; letter-spacing:.3px; }
+/* avatar picker modal */
+.av-picker-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:300; align-items:center; justify-content:center; padding:16px; }
+.av-picker-modal.open { display:flex; }
+.av-picker-box { background:var(--bg1); border-radius:14px; padding:22px; width:100%; max-width:420px; border:0.5px solid var(--bdr2); }
+.av-picker-title { font-size:15px; font-weight:500; color:var(--t1); margin-bottom:16px; }
+.av-upload-zone { width:100%; height:90px; border:2px dashed var(--bdr2); border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; cursor:pointer; background:var(--bg2); transition:border-color .15s; margin-bottom:14px; }
+.av-upload-zone:hover { border-color:var(--g); }
+.av-upload-zone span { font-size:12px; color:var(--t2); }
+.color-presets { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+.color-preset { width:44px; height:44px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; border:2px solid transparent; transition:border-color .15s, transform .1s; }
+.color-preset:hover, .color-preset.chosen { border-color:var(--g); transform:scale(1.1); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-title">Worker dashboard</div>
+  <div class="card" style="margin-bottom:18px">
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+
+      <!-- Clickable profile picture -->
+      <div class="pfp-wrap" onclick="openAvatarPicker()" title="Change profile picture">
+        <div class="avatar av-lg" id="worker-avatar" style="background:{{ worker.bg }};color:{{ worker.tc }}">
+          {% if worker.photo %}<img src="{{ worker.photo }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" id="avatar-img">{% else %}{{ worker.ini }}{% endif %}
+        </div>
+        <div class="pfp-edit-overlay">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.8"><path d="M13 2l3 3L5 16H2v-3L13 2z"/></svg>
+          <span>EDIT</span>
+        </div>
+      </div>
+
+      <div style="flex:1">
+        <div style="font-size:17px;font-weight:500;color:var(--t1)">{{ worker.name }}
+          {% if worker.verified %}<span class="verified-badge"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#185FA5" stroke-width="1.6"><path d="M1.5 5l2.5 3 5-6"/></svg>Verified</span>{% endif %}
+        </div>
+        <div style="font-size:13px;color:var(--t2);margin-top:3px">{{ worker.role }} &middot; {{ worker.loc }}</div>
+        <div style="font-size:13px;color:#EF9F27;margin-top:4px">{{ '★' * (worker.rating|round|int) }} <span style="color:var(--t2)">{{ worker.rating }} &middot; {{ worker.review_count }} reviews</span></div>
+        <div style="font-size:11px;color:var(--t3);margin-top:4px">Tap your photo to change it</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--t2);margin-bottom:6px;text-align:right">My availability</div>
+        <button id="avail-btn" onclick="toggleAvail({{ worker.id }})" style="padding:8px 18px;border-radius:9px;border:none;background:{{ 'var(--g)' if worker.avail else 'var(--t3)' }};color:#fff;font-size:13px;cursor:pointer;font-family:inherit;font-weight:500">{{ 'Available' if worker.avail else 'Unavailable' }}</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-num">34</div><div class="stat-label">Jobs done</div></div>
+    <div class="stat-card"><div class="stat-num">12</div><div class="stat-label">This month</div></div>
+    <div class="stat-card"><div class="stat-num">{{ worker.rating }}</div><div class="stat-label">Rating</div></div>
+    <div class="stat-card"><div class="stat-num">98%</div><div class="stat-label">Response rate</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(this,'tab-jobs')">Job requests</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-verification')">Verification</button>
+  </div>
+  <div class="tab-content active" id="tab-jobs">
+    {% for job in [{"title":"House maid - 3 days/week","employer":"Marie Kayitesi","loc":"Gasabo","status":"pending"},{"title":"Deep cleaning - one time","employer":"Patrick Nkurunziza","loc":"Kicukiro","status":"active"},{"title":"Laundry helper","employer":"Chantal Uwimana","loc":"Nyarugenge","status":"active"}] %}
+    <div class="dash-row">
+      <div style="width:24px;height:24px;border-radius:7px;background:var(--gl);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#0F6E56" stroke-width="1.5"><rect x="2" y="4" width="10" height="8" rx="1"/><path d="M4 4V3a3 3 0 0 1 6 0v1"/></svg></div>
+      <div class="dash-row-info"><div class="dash-row-title">{{ job.title }}</div><div class="dash-row-sub">{{ job.employer }} &middot; {{ job.loc }}</div></div>
+      <span class="status-pill {{ 's-active' if job.status=='active' else 's-pending' }}">{{ job.status }}</span>
+      <a href="{{ url_for('messages') }}" class="btn btn-primary" style="font-size:11px;text-decoration:none">Reply</a>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="tab-content" id="tab-verification">
+    <div class="card">
+      {% for step in ["Phone number verified","National ID submitted","Skills test passed","Background check complete"] %}
+      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg2);border-radius:9px;margin-bottom:8px">
+        <div style="width:22px;height:22px;border-radius:50%;background:var(--gl);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="11" height="11" viewBox="0 0 10 10" fill="none" stroke="#0F6E56" stroke-width="1.8"><path d="M1.5 5l2.5 3 5-6"/></svg></div>
+        <span style="font-size:13px;font-weight:500;color:var(--t1)">{{ step }}</span>
+        <span class="badge badge-green" style="margin-left:auto">Done</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Avatar picker modal -->
+<div class="av-picker-modal" id="av-modal" onclick="if(event.target===this)closeAvatarPicker()">
+  <div class="av-picker-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="av-picker-title" style="margin-bottom:0">Change profile picture</div>
+      <button onclick="closeAvatarPicker()" style="background:none;border:none;cursor:pointer;color:var(--t2);font-size:20px;line-height:1">&times;</button>
+    </div>
+
+    <!-- Upload photo -->
+    <label class="av-upload-zone">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span>Upload a photo</span>
+      <input type="file" accept="image/*" style="display:none" onchange="uploadPhoto(event)">
+    </label>
+
+    <!-- Colour presets -->
+    <div style="font-size:12px;color:var(--t2);margin-bottom:8px;font-weight:500">Or choose a colour avatar</div>
+    <div class="color-presets" id="color-presets">
+      {% set presets = [
+        ("#E1F5EE","#085041"),("#E6F1FB","#0C447C"),("#FAEEDA","#633806"),
+        ("#EEEDFE","#3C3489"),("#EAF3DE","#27500A"),("#FAECE7","#993C1D"),
+        ("#FBEAF0","#72243E"),("#F1EFE8","#444441"),("#FCEBEB","#A32D2D"),
+        ("#E1F5EE","#0F6E56"),("#E6F1FB","#185FA5"),("#FAEEDA","#854F0B")
+      ] %}
+      {% for bg, tc in presets %}
+      <div class="color-preset" style="background:{{ bg }};color:{{ tc }}"
+           data-bg="{{ bg }}" data-tc="{{ tc }}"
+           onclick="chooseColorPreset(this)">{{ worker.ini }}</div>
+      {% endfor %}
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button onclick="closeAvatarPicker()" style="flex:1;padding:9px;border-radius:9px;border:0.5px solid var(--bdr2);background:transparent;color:var(--t1);font-size:13px;cursor:pointer;font-family:inherit">Cancel</button>
+      <button onclick="applyAvatar()" style="flex:1;padding:9px;border-radius:9px;border:none;background:var(--g);color:#fff;font-size:13px;cursor:pointer;font-family:inherit;font-weight:500">Apply</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const WORKER_ID = {{ worker.id }};
+let pendingBg = null, pendingTc = null, pendingPhoto = null;
+
+function switchTab(btn,id){
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(t=>t.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById(id).classList.add("active");
+}
+
+async function toggleAvail(wid){
+  const res=await fetch(`/api/workers/${wid}/availability`,{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
+  if(res.ok){const d=await res.json();const btn=document.getElementById("avail-btn");btn.textContent=d.avail?"Available":"Unavailable";btn.style.background=d.avail?"var(--g)":"var(--t3)";}
+}
+
+// ── avatar picker ──
+function openAvatarPicker() {
+  document.getElementById("av-modal").classList.add("open");
+}
+function closeAvatarPicker() {
+  document.getElementById("av-modal").classList.remove("open");
+  pendingBg = pendingTc = pendingPhoto = null;
+  document.querySelectorAll(".color-preset").forEach(p => p.classList.remove("chosen"));
+}
+
+function chooseColorPreset(el) {
+  document.querySelectorAll(".color-preset").forEach(p => p.classList.remove("chosen"));
+  el.classList.add("chosen");
+  pendingBg = el.dataset.bg;
+  pendingTc = el.dataset.tc;
+  pendingPhoto = null;
+  // live preview
+  const av = document.getElementById("worker-avatar");
+  av.style.background = pendingBg;
+  av.style.color = pendingTc;
+  const img = document.getElementById("avatar-img");
+  if (img) { img.remove(); av.textContent = "{{ worker.ini }}"; }
+}
+
+async function uploadPhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  // local preview
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const av = document.getElementById("worker-avatar");
+    const img = document.getElementById("avatar-img") || document.createElement("img");
+    img.id = "avatar-img";
+    img.src = ev.target.result;
+    img.style.cssText = "width:100%;height:100%;object-fit:cover;border-radius:50%";
+    av.innerHTML = "";
+    av.appendChild(img);
+    pendingPhoto = file;
+    pendingBg = pendingTc = null;
+    document.querySelectorAll(".color-preset").forEach(p => p.classList.remove("chosen"));
+  };
+  reader.readAsDataURL(file);
+}
+
+async function applyAvatar() {
+  if (pendingPhoto) {
+    const fd = new FormData();
+    fd.append("photo", pendingPhoto);
+    await fetch(`/api/workers/${WORKER_ID}/photo`, { method:"POST", body:fd });
+  } else if (pendingBg) {
+    await fetch(`/api/workers/${WORKER_ID}/photo`, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ bg: pendingBg, tc: pendingTc }),
+    });
+  }
+  closeAvatarPicker();
+}
+</script>
+{% endblock %}

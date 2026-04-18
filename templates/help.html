@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Help{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-title">Help center</div>
+  <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
+    <div style="flex:1;min-width:280px">
+      <div class="section-title">Frequently asked questions</div>
+      {% set faqs = [
+        ("How do I find an affordable house?","Go to Houses in the menu. Use price and location filters. Click any listing to see full details and comment directly to the landlord."),
+        ("How do I post a house listing?","Click + Post house in the nav. Add photos, price, location, bedrooms and description. It goes live after a quick review."),
+        ("How do I mark my house as taken?","Open your listing or go to Employer dashboard. Click Mark as taken. The listing shows a red Taken badge."),
+        ("How do I create a profile?","Click Join free in the nav. Choose worker or employer, add your name, location, age and skills."),
+        ("Is Serivasi free?","Yes - creating a profile, listing a house, and searching is completely free."),
+        ("How are workers verified?","Workers verify their phone and submit their national ID. Verified workers get a blue checkmark badge."),
+        ("How do reviews work?","After a job, employers leave a star rating and written comment. All reviews are public on the worker profile."),
+        ("What languages are supported?","Kinyarwanda, French and English. Toggle with the buttons in the top navigation."),
+      ] %}
+      {% for q, a in faqs %}
+      <div class="faq-item">
+        <div class="faq-question" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.faq-arrow').classList.toggle('open')">
+          {{ q }}<span class="faq-arrow">&#9660;</span>
+        </div>
+        <div class="faq-answer">{{ a }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div>
+      <div class="section-title">Ask Seri - Help bot</div>
+      <div class="bot-box">
+        <div class="bot-head">
+          <div class="avatar av-xs" style="background:var(--gl);color:var(--gt)">S</div>
+          <div><div style="font-size:12px;font-weight:500;color:var(--t1)">Seri</div><div style="font-size:10px;color:var(--g)">Always here</div></div>
+        </div>
+        <div class="bot-messages" id="bot-msgs"><div class="bot-msg bot">Muraho! I'm Seri. Ask me anything about Serivasi.</div></div>
+        <div class="bot-quickq">
+          <button class="quick-q-btn" onclick="askSeri('How do I find a house?')">Find house</button>
+          <button class="quick-q-btn" onclick="askSeri('How do I create a profile?')">Profile</button>
+          <button class="quick-q-btn" onclick="askSeri('Is Serivasi free?')">Pricing</button>
+          <button class="quick-q-btn" onclick="askSeri('How are workers verified?')">Verification</button>
+        </div>
+        <div class="bot-inp">
+          <input type="text" id="bot-inp" placeholder="Ask Seri..." autocomplete="off" name="bot-q" onkeydown="if(event.key==='Enter')sendBot()">
+          <button onclick="sendBot()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function sendBot(){const inp=document.getElementById("bot-inp");const q=inp.value.trim();if(!q)return;inp.value="";addBotMsg(q,"user");const td=addBotMsg("<div class='typing'><span></span><span></span><span></span></div>","bot");const res=await fetch("/api/bot",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:q})});td.remove();const d=await res.json();addBotMsg(d.answer,"bot");}
+function askSeri(q){document.getElementById("bot-inp").value=q;sendBot();}
+function addBotMsg(text,role){const c=document.getElementById("bot-msgs");const div=document.createElement("div");div.className=`bot-msg ${role}`;div.innerHTML=text;c.appendChild(div);c.scrollTop=c.scrollHeight;return div;}
+</script>
+{% endblock %}

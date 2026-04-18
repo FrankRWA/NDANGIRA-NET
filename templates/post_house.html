@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Post a House{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:600px">
+  <div style="margin-bottom:16px"><a href="{{ url_for('houses') }}" class="btn" style="font-size:12px">&larr; Back</a></div>
+  <div class="page-title">Post a house listing</div>
+  <div class="card">
+    <form id="post-form" enctype="multipart/form-data">
+
+      <div class="form-group">
+        <label>Photos of the house</label>
+        <label class="upload-zone">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="1.4">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span>Tap to upload house photos</span>
+          <input type="file" name="photo" accept="image/*" multiple style="display:none" onchange="previewPhotos(event)">
+        </label>
+        <div class="photo-preview" id="photo-preview"></div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group"><label>Title</label><input type="text" name="title" placeholder="e.g. Cozy 2BR in Gasabo" autocomplete="off" required></div>
+        <div class="form-group"><label>Monthly rent (RWF)</label><input type="number" name="price" placeholder="50000" min="5000" autocomplete="off" required></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Location</label>
+          <select name="loc">
+            <option>Gasabo, Kigali</option><option>Kicukiro, Kigali</option>
+            <option>Nyarugenge, Kigali</option><option>Kacyiru, Kigali</option>
+            <option>Musanze</option><option>Huye</option><option>Rubavu</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Bedrooms</label>
+          <select name="rooms">
+            <option value="1">Studio / 1 room</option>
+            <option value="2">2 bedrooms</option>
+            <option value="3">3 bedrooms</option>
+            <option value="4">4+ bedrooms</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Landlord name</label>
+        <input type="text" name="landlord" placeholder="Your full name" autocomplete="off" required>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea name="desc" autocomplete="off" placeholder="Describe the house: size, condition, nearby landmarks..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Included features</label>
+        <div class="skills-grid" style="margin-top:6px">
+          {% for f in ["Water","Electricity","Furnished","Internet","Garden","Parking","Security guard","Compound","Near transport","Near market"] %}
+            <button type="button" class="skill-chip" onclick="toggleFeature(this,'{{ f }}')">{{ f }}</button>
+          {% endfor %}
+        </div>
+        <div id="features-hidden"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <a href="{{ url_for('houses') }}" class="btn" style="flex:1;justify-content:center;text-decoration:none">Cancel</a>
+        <button type="submit" class="btn btn-primary" style="flex:2">Publish listing</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function previewPhotos(e) {
+  const preview = document.getElementById("photo-preview");
+  Array.from(e.target.files).forEach(f => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = document.createElement("img");
+      img.src = ev.target.result;
+      preview.appendChild(img);
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+function toggleFeature(btn, name) {
+  btn.classList.toggle("selected");
+  const container = document.getElementById("features-hidden");
+  const existing = container.querySelector(`input[value="${name}"]`);
+  if (existing) existing.remove();
+  else {
+    const inp = document.createElement("input");
+    inp.type = "hidden"; inp.name = "features"; inp.value = name;
+    container.appendChild(inp);
+  }
+}
+
+document.getElementById("post-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const res = await fetch("/api/houses", { method:"POST", body:fd });
+  if (res.ok) {
+    const data = await res.json();
+    window.location.href = `/houses/${data.id}`;
+  } else {
+    alert("Something went wrong. Please try again.");
+  }
+});
+</script>
+{% endblock %}

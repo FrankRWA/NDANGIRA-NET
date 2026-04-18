@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block title %}{{ worker.name }}{% endblock %}
+{% block content %}
+<div class="container" style="max-width:680px">
+  <div style="margin-bottom:14px"><a href="{{ url_for('workers') }}" class="btn" style="font-size:12px">&larr; Back to workers</a></div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+      <div class="avatar av-lg" style="background:{{ worker.bg }};color:{{ worker.tc }}">{{ worker.ini }}</div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:20px;font-weight:600;color:var(--t1)">
+          {{ worker.name }}
+          {% if worker.verified %}
+            <span class="verified-badge">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#185FA5" stroke-width="1.6"><path d="M1.5 5l2.5 3 5-6"/></svg>
+              Verified
+            </span>
+          {% endif %}
+        </div>
+        <div style="font-size:14px;color:var(--t2);margin:4px 0">{{ worker.role }} &middot; {{ worker.loc }}</div>
+        <div style="color:#EF9F27;font-size:14px">
+          {{ '★' * (worker.rating|round|int) }}{{ '☆' * (5-(worker.rating|round|int)) }}
+          <span style="color:var(--t2);font-size:13px"> {{ worker.rating }} &middot; {{ worker.review_count }} reviews</span>
+        </div>
+        <div class="tags" style="margin-top:10px">{% for s in worker.skills %}<span class="tag">{{ s }}</span>{% endfor %}</div>
+        <div style="font-size:12px;color:{{ 'var(--g)' if worker.avail else 'var(--t3)' }};margin-top:8px">
+          {% if worker.avail %}<span class="avail-dot"></span> Currently available{% else %}Not available{% endif %}
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <a href="{{ url_for('messages') }}" class="btn btn-primary" style="flex:1;justify-content:center;text-decoration:none">Send message</a>
+      <button class="btn" style="flex:1" onclick="document.getElementById('modal-review').classList.remove('hidden')">Write a review</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div style="font-size:14px;font-weight:500;color:var(--t1);margin-bottom:10px">About</div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:14px">{{ worker.bio }}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div style="background:var(--bg2);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--t2)">Age</div><div style="font-size:13px;color:var(--t1);margin-top:2px">{{ worker.age }} years</div></div>
+      <div style="background:var(--bg2);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--t2)">Location</div><div style="font-size:13px;color:var(--t1);margin-top:2px">{{ worker.loc }}</div></div>
+      <div style="background:var(--bg2);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--t2)">Reviews</div><div style="font-size:13px;color:var(--t1);margin-top:2px">{{ reviews|length }}</div></div>
+      <div style="background:var(--bg2);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--t2)">Verified</div><div style="font-size:13px;color:{{ 'var(--g)' if worker.verified else 'var(--t3)' }};margin-top:2px">{{ 'Yes' if worker.verified else 'Pending' }}</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:14px;font-weight:500;color:var(--t1);margin-bottom:14px">Reviews</div>
+    {% if reviews %}
+      {% set counts = namespace(v=[reviews|selectattr('stars','eq',5)|list|length, reviews|selectattr('stars','eq',4)|list|length, reviews|selectattr('stars','eq',3)|list|length, reviews|selectattr('stars','eq',2)|list|length, reviews|selectattr('stars','eq',1)|list|length]) %}
+      <div class="rating-summary">
+        <div class="rating-big">
+          <div class="rating-number">{{ avg }}</div>
+          <div style="color:#EF9F27;font-size:16px;margin:4px 0">{{ '★' * (avg|round|int) }}</div>
+          <div class="rating-count">{{ reviews|length }} review{{ 's' if reviews|length != 1 }}</div>
+        </div>
+        <div class="rating-bars">
+          {% for n in [5,4,3,2,1] %}
+          {% set cnt = reviews|selectattr('stars','eq',n)|list|length %}
+          <div class="rbar-row">
+            <span class="rbar-label">{{ n }}</span>
+            <div class="rbar-track"><div class="rbar-fill" style="width:{{ ((cnt/reviews|length)*100)|round }}%"></div></div>
+            <span class="rbar-count">{{ cnt }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <div id="reviews-list">
+      {% if reviews %}
+        {% for r in reviews %}
+        <div class="review-card" id="rev-{{ r.id }}">
+          <div class="review-header">
+            <div class="avatar av-sm" style="background:{{ r.author_bg }};color:{{ r.author_tc }}">{{ r.author_ini }}</div>
+            <div class="review-meta">
+              <div class="review-author">{{ r.author }}</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+                <span class="stars">{{ '★' * r.stars }}{{ '☆' * (5-r.stars) }}</span>
+                <span class="review-date">{{ r.date }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="review-body">{{ r.body }}</div>
+          <div class="review-actions">
+            <button class="helpful-btn{{ ' liked' if r.liked }}" onclick="toggleHelpful('{{ r.id }}',this)">
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 7h2v6H1zM4 7l3-6 1.5.5v3h4l-1 6H4V7z"/></svg>
+              Helpful (<span class="hcount">{{ r.helpful }}</span>)
+            </button>
+            <span class="reply-toggle" onclick="toggleComments('{{ r.id }}')">
+              {% if r.comments %}{{ r.comments|length }} comment{{ 's' if r.comments|length > 1 }} &middot; {% endif %}Reply
+            </span>
+          </div>
+          <div id="cmts-{{ r.id }}" style="{{ '' if r.comments else 'display:none' }};margin-top:10px;padding-top:10px;border-top:0.5px solid var(--bdr)">
+            <div id="cmts-list-{{ r.id }}">
+              {% for c in r.comments %}
+              <div class="comment">
+                <div class="avatar av-xs" style="background:{{ c.bg }};color:{{ c.tc }}">{{ c.ini }}</div>
+                <div class="comment-bubble">
+                  <div class="comment-author">{{ c.author }}{% if c.is_worker %}<span class="badge badge-green">Worker</span>{% endif %}<span class="comment-date">{{ c.date }}</span></div>
+                  <div class="comment-text">{{ c.text }}</div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            <div class="comment-input">
+              <div class="avatar av-xs" style="background:#E1F5EE;color:#085041">Me</div>
+              <input type="text" id="cinp-{{ r.id }}" autocomplete="off" name="rv-cmt" placeholder="Add a comment..." onkeydown="if(event.key==='Enter')postRvComment('{{ r.id }}')">
+              <button class="btn btn-primary" style="padding:7px 12px;font-size:12px" onclick="postRvComment('{{ r.id }}')">Post</button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div id="no-reviews" style="text-align:center;padding:24px;font-size:13px;color:var(--t2)">No reviews yet. Be the first!</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Write review modal -->
+<div id="modal-review" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">Write a review</div>
+      <button class="modal-close" onclick="document.getElementById('modal-review').classList.add('hidden')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Your rating</label>
+        <div style="display:flex;gap:8px;margin-top:6px" id="star-picker">
+          {% for n in [1,2,3,4,5] %}
+          <span style="font-size:30px;cursor:pointer;color:var(--bg3)" onclick="setStars({{ n }})" onmouseover="hoverStars({{ n }})" onmouseout="resetStars()">&#9733;</span>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Your review</label>
+        <textarea id="review-text" autocomplete="off" placeholder="Share your experience working with this person..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="document.getElementById('modal-review').classList.add('hidden')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitReview()">Submit review</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const WORKER_ID = {{ worker.id }};
+let selectedStars = 0;
+
+function setStars(n) {
+  selectedStars = n;
+  document.querySelectorAll("#star-picker span").forEach((s,i) => s.style.color = i < n ? "#EF9F27" : "var(--bg3)");
+}
+function hoverStars(n) {
+  document.querySelectorAll("#star-picker span").forEach((s,i) => s.style.color = i < n ? "#EF9F27" : "var(--bg3)");
+}
+function resetStars() { setStars(selectedStars); }
+
+async function submitReview() {
+  const body = document.getElementById("review-text").value.trim();
+  if (!selectedStars) { alert("Please select a rating."); return; }
+  if (!body) { alert("Please write a review."); return; }
+  const res = await fetch(`/api/workers/${WORKER_ID}/reviews`, {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ author:"You", author_ini:"Me", author_bg:"#E1F5EE", author_tc:"#085041", stars:selectedStars, body }),
+  });
+  if (res.ok) { document.getElementById("modal-review").classList.add("hidden"); location.reload(); }
+}
+
+async function toggleHelpful(rid, btn) {
+  const res = await fetch(`/api/workers/${WORKER_ID}/reviews/${rid}/helpful`, { method:"POST" });
+  if (res.ok) {
+    const data = await res.json();
+    btn.classList.toggle("liked", data.liked);
+    btn.querySelector(".hcount").textContent = data.helpful;
+  }
+}
+
+function toggleComments(rid) {
+  const el = document.getElementById("cmts-"+rid);
+  if (el) el.style.display = el.style.display === "none" ? "block" : "none";
+}
+
+async function postRvComment(rid) {
+  const inp = document.getElementById("cinp-"+rid);
+  const txt = inp ? inp.value.trim() : "";
+  if (!txt) return;
+  const res = await fetch(`/api/workers/${WORKER_ID}/reviews/${rid}/comments`, {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ author:"You", ini:"Me", bg:"#E1F5EE", tc:"#085041", text:txt }),
+  });
+  if (res.ok) {
+    const { comment:c } = await res.json();
+    inp.value = "";
+    document.getElementById("cmts-"+rid).style.display = "block";
+    const div = document.createElement("div");
+    div.className = "comment";
+    div.innerHTML = `<div class="avatar av-xs" style="background:${c.bg};color:${c.tc}">${c.ini}</div>
+      <div class="comment-bubble"><div class="comment-author">${c.author}<span class="comment-date">${c.date}</span></div>
+      <div class="comment-text">${c.text}</div></div>`;
+    document.getElementById("cmts-list-"+rid).appendChild(div);
+  }
+}
+</script>
+{% endblock %}

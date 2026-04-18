@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}About{% endblock %}
+{% block content %}
+<div class="container" style="max-width:780px">
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-num" id="sn1">0</div><div class="stat-label">Registered workers</div></div>
+    <div class="stat-card"><div class="stat-num" id="sn2">0</div><div class="stat-label">Employers</div></div>
+    <div class="stat-card"><div class="stat-num" id="sn3">0</div><div class="stat-label">Jobs completed</div></div>
+    <div class="stat-card"><div class="stat-num" id="sn4">0</div><div class="stat-label">Houses listed</div></div>
+    <div class="stat-card"><div class="stat-num" id="sn5">0</div><div class="stat-label">Districts covered</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;flex-wrap:wrap">
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <div style="font-size:15px;font-weight:500;color:var(--t1);margin-bottom:10px">What is Serivasi?</div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.7">Serivasi is Rwanda's first dedicated platform connecting households with trusted local workers and affordable housing. We put affordable house commissioning at the center - because decent housing is a right, not a luxury.</div>
+      </div>
+      <div class="card">
+        <div style="font-size:15px;font-weight:500;color:var(--t1);margin-bottom:10px">Our mission</div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.7">To create dignified, visible work for Rwanda's everyday service workers while saving employers time and building trust through transparency.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:15px;font-weight:500;color:var(--t1);margin-bottom:16px">Platform history</div>
+      <div class="timeline">
+        {% for item in [("2024 - Idea","Founder identifies gap in Rwanda's informal labor and housing markets."),("Early 2025","Platform designed with community input. Three language support from day one."),("Mid 2025 - Beta","Kigali pilot with 200 workers. First 500 jobs matched in 3 weeks."),("2026 - Now","Expanding to Musanze, Huye, Rubavu. Mobile app in development.")] %}
+        <div class="tl-item">
+          <div class="tl-left"><div class="tl-dot"></div>{% if not loop.last %}<div class="tl-line"></div>{% endif %}</div>
+          <div><div class="tl-year">{{ item[0] }}</div><div class="tl-text">{{ item[1] }}</div></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div style="font-size:15px;font-weight:500;color:var(--t1);margin-bottom:12px">Services on Serivasi</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      {% for s in ["House commissioning","House maids","Guards (Abazamu)","Drivers","Plumbers","Welders","Carpenters","Gardeners","Cleaners","Laundry helpers"] %}
+        <span class="tag" style="font-size:12px;padding:5px 13px">{{ s }}</span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){const t=[4820,1240,9300,320,30];["sn1","sn2","sn3","sn4","sn5"].forEach((id,i)=>{let v=0;const step=Math.ceil(t[i]/50);const iv=setInterval(()=>{v=Math.min(v+step,t[i]);const el=document.getElementById(id);if(el)el.textContent=v.toLocaleString();if(v>=t[i])clearInterval(iv);},25);});})();
+</script>
+{% endblock %}
