@@ -199,7 +199,7 @@ DB = {
         {"id": 6, "unread": False, "icon": "house",  "link": "/houses/4",           "title": "House marked as taken",          "sub": "Room for rent - Musanze has been marked as taken",   "time": "3 days ago"},
     ],
 
-    "next_ids": {"house": 100, "review": 200, "comment": 300, "notif": 400, "user": 10},
+    "next_ids": {"house": 100, "review": 200, "comment": 300, "notif": 400, "user": 10, "convo": 10},
 
     "users": [
         {"id": 1, "name": "Diane Uwimana",        "phone": "+250788000001", "email": "diane@serivasi.rw",   "password": "demo123", "role": "worker",   "loc": "Gasabo, Kigali",    "age": 26, "skills": ["House maid","Cleaner"],  "ini": "DU", "bg": "#E1F5EE", "tc": "#085041"},
@@ -425,10 +425,33 @@ def worker_profile(wid):
 
 @app.route("/messages")
 def messages():
+    open_worker_id = request.args.get("worker", type=int)
     return render_template("messages.html",
                            conversations=DB["conversations"],
                            messages=DB["messages"],
-                           workers=DB["workers"])
+                           workers=DB["workers"],
+                           open_worker_id=open_worker_id)
+
+@app.route("/api/conversations", methods=["POST"])
+def api_create_conversation():
+    data = request.json or {}
+    name = data.get("name", "")
+    existing = next((c for c in DB["conversations"] if c["name"] == name), None)
+    if existing:
+        return jsonify(existing), 200
+    convo = {
+        "id":      next_id("convo"),
+        "name":    name,
+        "ini":     data.get("ini", ""),
+        "bg":      data.get("bg", "#E1F5EE"),
+        "tc":      data.get("tc", "#085041"),
+        "role":    data.get("role", ""),
+        "online":  False,
+        "unread":  0,
+        "preview": "New conversation",
+    }
+    DB["conversations"].insert(0, convo)
+    return jsonify(convo), 201
 
 @app.route("/employers/<int:eid>")
 def employer_profile(eid):

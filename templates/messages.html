@@ -467,24 +467,38 @@ function filterNewChat(q) {
   });
 }
 
-function startConvo(wid, name, ini, bg, tc, role) {
+async function startConvo(wid, name, ini, bg, tc, role) {
   closeNewChat();
   const existing = CONVOS.find(c => c.name === name);
   if (existing) { openConvo(existing.id); return; }
-  const newId = Date.now();
-  CONVOS.push({ id:newId, name, ini, bg, tc, role, online:false, unread:0, preview:'New conversation' });
-  const list = document.getElementById('convo-list');
-  const div  = document.createElement('div');
-  div.className = 'convo-item'; div.id = `ci-${newId}`;
-  div.dataset.id = newId; div.dataset.name = name.toLowerCase();
-  div.onclick = () => openConvo(newId);
-  div.innerHTML = `<div class="convo-av"><div class="avatar av-sm" style="background:${bg};color:${tc}">${ini}</div></div>
-    <div class="convo-body"><div class="convo-name">${name}</div><div class="convo-preview" id="prev-${newId}">New conversation</div></div>
-    <div class="convo-meta"><span class="convo-time">now</span></div>`;
-  list.insertBefore(div, list.firstChild);
-  openConvo(newId);
+
+  const res   = await fetch('/api/conversations', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ name, ini, bg, tc, role }),
+  });
+  const convo = await res.json();
+
+  if (!CONVOS.find(c => c.id === convo.id)) {
+    CONVOS.push(convo);
+    const list = document.getElementById('convo-list');
+    const div  = document.createElement('div');
+    div.className = 'convo-item'; div.id = `ci-${convo.id}`;
+    div.dataset.id = convo.id; div.dataset.name = name.toLowerCase();
+    div.onclick = () => openConvo(convo.id);
+    div.innerHTML = `<div class="convo-av"><div class="avatar av-sm" style="background:${bg};color:${tc}">${ini}</div></div>
+      <div class="convo-body"><div class="convo-name">${name}</div><div class="convo-preview" id="prev-${convo.id}">New conversation</div></div>
+      <div class="convo-meta"><span class="convo-time">now</span></div>`;
+    list.insertBefore(div, list.firstChild);
+  }
+  openConvo(convo.id);
 }
 
+{% if open_worker_id %}
+const _openWorker = {{ workers | tojson }}.find(w => w.id === {{ open_worker_id }});
+if (_openWorker) startConvo(_openWorker.id, _openWorker.name, _openWorker.ini, _openWorker.bg, _openWorker.tc, _openWorker.role);
+else openConvo(activeId);
+{% else %}
 openConvo(activeId);
+{% endif %}
 </script>
 {% endblock %}
