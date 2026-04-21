@@ -169,18 +169,18 @@ DB = {
 
     "messages": {
         1: [
-            {"dir": "in",  "text": "Hello, I am available for house maid work.", "time": "9:30 AM"},
-            {"dir": "out", "text": "Hi Diane! Tell me about your experience.",   "time": "9:32 AM"},
-            {"dir": "in",  "text": "I have 3 years of experience. I can start Monday.", "time": "9:34 AM"},
+            {"dir": "in",  "sender_id": 1, "text": "Hello, I am available for house maid work.", "time": "9:30 AM"},
+            {"dir": "out", "sender_id": 2, "text": "Hi Diane! Tell me about your experience.",   "time": "9:32 AM"},
+            {"dir": "in",  "sender_id": 1, "text": "I have 3 years of experience. I can start Monday.", "time": "9:34 AM"},
         ],
         2: [
-            {"dir": "out", "text": "Jean Pierre, I have a leaking pipe.", "time": "2:10 PM"},
-            {"dir": "in",  "text": "I can come tomorrow at 8am.",         "time": "2:15 PM"},
-            {"dir": "in",  "text": "The pipe is fixed now!",              "time": "4:10 PM"},
+            {"dir": "out", "sender_id": 2, "text": "Jean Pierre, I have a leaking pipe.", "time": "2:10 PM"},
+            {"dir": "in",  "sender_id": None, "text": "I can come tomorrow at 8am.",         "time": "2:15 PM"},
+            {"dir": "in",  "sender_id": None, "text": "The pipe is fixed now!",              "time": "4:10 PM"},
         ],
         3: [
-            {"dir": "out", "text": "Aline, I need a driver to the airport Thursday.", "time": "10:00 AM"},
-            {"dir": "in",  "text": "I am free. What time is your flight?",           "time": "10:04 AM"},
+            {"dir": "out", "sender_id": 2, "text": "Aline, I need a driver to the airport Thursday.", "time": "10:00 AM"},
+            {"dir": "in",  "sender_id": None, "text": "I am free. What time is your flight?",           "time": "10:04 AM"},
         ],
     },
 
@@ -452,20 +452,18 @@ def employer_dashboard():
 
 @app.route("/worker-dashboard")
 def worker_dashboard():
-    # Use session user if logged in, otherwise allow ?id= param for demo, else default
     uid = session.get("user_id")
     worker = None
     if uid:
-        # find the worker entry matching the logged-in user
         user = next((u for u in DB["users"] if u["id"] == uid), None)
         if user:
+            if user.get("role") == "employer":
+                return redirect(url_for("employer_profile", eid=uid))
             worker = next((w for w in DB["workers"] if w["name"] == user["name"]), None)
-    # fallback: ?id= param lets any worker view their own dashboard
     if not worker:
         wid = request.args.get("id", type=int)
         if wid:
             worker = get_worker(wid)
-    # final fallback for demo — use first worker
     if not worker:
         worker = get_worker(1)
     reviews = DB["reviews"].get(worker["id"], [])
@@ -710,13 +708,23 @@ def api_review_comment(wid, rid):
 
 @app.route("/api/messages/<int:convo_id>", methods=["GET"])
 def api_get_messages(convo_id):
-    return jsonify(DB["messages"].get(convo_id, []))
+    msgs = DB["messages"].get(convo_id, [])
+    uid = session.get("user_id")
+    if uid:
+        result = []
+        for m in msgs:
+            mc = dict(m)
+            mc["dir"] = "out" if m.get("sender_id") == uid else "in"
+            result.append(mc)
+        return jsonify(result)
+    return jsonify(msgs)
 
 @app.route("/api/messages/<int:convo_id>", methods=["POST"])
 def api_send_message(convo_id):
     data = request.json or {}
     msg = {
-        "dir":  data.get("dir", "out"),
+        "sender_id": session.get("user_id"),
+        "dir":  "out",
         "text": data.get("text", ""),
         "time": now_time(),
         "type": data.get("type", "text"),
@@ -748,6 +756,7 @@ def api_send_media(convo_id):
     f.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
     url = "/static/uploads/" + filename
     msg = {
+        "sender_id": session.get("user_id"),
         "dir": "out",
         "text": f"[{media_type.capitalize()} attachment]",
         "time": now_time(),
