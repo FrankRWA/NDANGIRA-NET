@@ -4,7 +4,7 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 from datetime import datetime
-import os, uuid, copy
+import os, uuid, copy, random, string
 
 app = Flask(__name__)
 app.secret_key = "serivasi-dev-secret-2026"
@@ -191,20 +191,34 @@ DB = {
     ],
 
     "notifications": [
-        {"id": 1, "unread": True,  "icon": "msg",    "link": "/messages",          "title": "New comment on your listing",  "sub": "Marie K. commented on \"Cozy 2BR in Kicukiro\"",      "time": "5 min ago"},
-        {"id": 2, "unread": True,  "icon": "house",  "link": "/houses/2",           "title": "House listing approved",        "sub": "Your listing \"Modern studio\" is now live",           "time": "1 hr ago"},
-        {"id": 3, "unread": True,  "icon": "verify", "link": "/worker-dashboard",   "title": "Verification complete",          "sub": "Your ID has been verified. Verified badge added.",    "time": "3 hrs ago"},
-        {"id": 4, "unread": False, "icon": "job",    "link": "/messages",           "title": "Job request received",           "sub": "Patrick is looking for a house maid in Gasabo",      "time": "Yesterday"},
-        {"id": 5, "unread": False, "icon": "star",   "link": "/workers/1",          "title": "New review",                    "sub": "You received a 5-star review from Chantal Uwimana",  "time": "2 days ago"},
-        {"id": 6, "unread": False, "icon": "house",  "link": "/houses/4",           "title": "House marked as taken",          "sub": "Room for rent - Musanze has been marked as taken",   "time": "3 days ago"},
+        {"id": 1, "unread": True,  "user_id": 2, "icon": "msg",    "link": "/messages",        "title": "New comment on your listing",  "sub": "Marie K. commented on \"Cozy 2BR in Kicukiro\"",      "time": "5 min ago"},
+        {"id": 2, "unread": True,  "user_id": 2, "icon": "house",  "link": "/houses/2",         "title": "House listing approved",        "sub": "Your listing \"Modern studio\" is now live",           "time": "1 hr ago"},
+        {"id": 3, "unread": True,  "user_id": 1, "icon": "verify", "link": "/worker-dashboard", "title": "Verification complete",          "sub": "Your ID has been verified. Verified badge added.",    "time": "3 hrs ago"},
+        {"id": 4, "unread": False, "user_id": 2, "icon": "job",    "link": "/messages",         "title": "Job request received",           "sub": "Patrick is looking for a house maid in Gasabo",      "time": "Yesterday"},
+        {"id": 5, "unread": False, "user_id": 1, "icon": "star",   "link": "/workers/1",        "title": "New review",                    "sub": "You received a 5-star review from Chantal Uwimana",  "time": "2 days ago"},
+        {"id": 6, "unread": False, "user_id": 2, "icon": "house",  "link": "/houses/4",         "title": "House marked as taken",          "sub": "Room for rent - Musanze has been marked as taken",   "time": "3 days ago"},
     ],
 
-    "next_ids": {"house": 100, "review": 200, "comment": 300, "notif": 400, "user": 10, "convo": 10},
+    "next_ids": {"house": 100, "review": 200, "comment": 300, "notif": 400, "user": 10, "convo": 10, "activity": 500},
+
+    "reset_tokens":  {},  # token → user_id (forgot-password codes)
+    "email_tokens":  {},  # token → user_id (email verification codes)
+    "activities":    {    # user_id → list of activity entries
+        1: [
+            {"id": 501, "type": "login",   "description": "Signed in",                            "icon": "verify", "time": "9:30 AM", "date": "Apr 21, 2026"},
+            {"id": 502, "type": "message", "description": "Replied to a job request from Marie K.","icon": "msg",    "time": "9:32 AM", "date": "Apr 21, 2026"},
+        ],
+        2: [
+            {"id": 503, "type": "login",   "description": "Signed in",                                               "icon": "verify", "time": "8:00 AM", "date": "Apr 21, 2026"},
+            {"id": 504, "type": "house",   "description": "Posted house listing: Modern studio - Kacyiru",           "icon": "house",  "time": "8:15 AM", "date": "Apr 21, 2026"},
+            {"id": 505, "type": "message", "description": "Sent a message to Diane Uwimana",                         "icon": "msg",    "time": "9:32 AM", "date": "Apr 21, 2026"},
+        ],
+    },
 
     "users": [
-        {"id": 1, "name": "Diane Uwimana",        "phone": "+250788000001", "email": "diane@serivasi.rw",   "password": "demo123", "role": "worker",   "loc": "Gasabo, Kigali",    "age": 26, "skills": ["House maid","Cleaner"],  "ini": "DU", "bg": "#E1F5EE", "tc": "#085041"},
-        {"id": 2, "name": "Jean Paul Nkurunziza",  "phone": "+250788000002", "email": "jp@serivasi.rw",      "password": "demo123", "role": "employer",  "loc": "Kicukiro, Kigali",  "age": 38, "skills": [],                       "ini": "JP", "bg": "#E6F1FB", "tc": "#0C447C"},
-        {"id": 3, "name": "Admin User",            "phone": "+250788000000", "email": "admin@serivasi.rw",   "password": "admin",   "role": "employer",  "loc": "Kigali",            "age": 30, "skills": [],                       "ini": "AD", "bg": "#FAEEDA", "tc": "#633806"},
+        {"id": 1, "name": "Diane Uwimana",       "phone": "+250788000001", "email": "diane@serivasi.rw",  "password": "demo123", "role": "worker",   "loc": "Gasabo, Kigali",   "age": 26, "skills": ["House maid","Cleaner"], "ini": "DU", "bg": "#E1F5EE", "tc": "#085041", "email_verified": True},
+        {"id": 2, "name": "Jean Paul Nkurunziza", "phone": "+250788000002", "email": "jp@serivasi.rw",     "password": "demo123", "role": "employer", "loc": "Kicukiro, Kigali", "age": 38, "skills": [],                      "ini": "JP", "bg": "#E6F1FB", "tc": "#0C447C", "email_verified": True},
+        {"id": 3, "name": "Admin User",           "phone": "+250788000000", "email": "admin@serivasi.rw",  "password": "admin",   "role": "employer", "loc": "Kigali",           "age": 30, "skills": [],                      "ini": "AD", "bg": "#FAEEDA", "tc": "#633806", "email_verified": True},
     ],
 
     # employer profiles — name, location, ratings from workers they hired
@@ -261,13 +275,25 @@ def get_house(hid):
 def get_worker(wid):
     return next((w for w in DB["workers"] if w["id"] == wid), None)
 
-def add_notification(icon, title, sub, link=None):
+def add_notification(icon, title, sub, link=None, user_id=None):
     default_links = {"msg": "/messages", "house": "/houses", "verify": "/worker-dashboard",
                      "job": "/messages", "star": "/workers/1"}
     DB["notifications"].insert(0, {
-        "id": next_id("notif"), "unread": True,
+        "id": next_id("notif"), "unread": True, "user_id": user_id,
         "icon": icon, "title": title, "sub": sub, "time": "Just now",
         "link": link or default_links.get(icon, "/"),
+    })
+
+def add_activity(user_id, act_type, description, icon="star"):
+    if user_id not in DB["activities"]:
+        DB["activities"][user_id] = []
+    DB["activities"][user_id].insert(0, {
+        "id": next_id("activity"),
+        "type": act_type,
+        "description": description,
+        "icon": icon,
+        "time": now_time(),
+        "date": datetime.now().strftime("%b %d, %Y"),
     })
 
 def find_user(phone_or_email):
@@ -296,7 +322,8 @@ def api_login():
         return jsonify({"error": "Incorrect phone number or password."}), 401
 
     session["user_id"] = user["id"]
-    add_notification("verify", "Welcome back!", f'You signed in as {user["name"]}.')
+    add_notification("verify", "Welcome back!", f'You signed in as {user["name"]}.', user_id=user["id"])
+    add_activity(user["id"], "login", "Signed in", "verify")
     return jsonify({"user": safe_user(user)}), 200
 
 
@@ -324,21 +351,30 @@ def api_signup():
     tcs = ["#085041","#0C447C","#633806","#3C3489","#27500A","#993C1D","#72243E"]
     idx = len(DB["users"]) % len(bgs)
 
+    email = data.get("email", "").strip().lower()
+    verify_token = None
+    if email:
+        verify_token = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
     new_user = {
-        "id":       next_id("user"),
-        "name":     name,
-        "phone":    phone,
-        "email":    "",
-        "password": pw,
-        "role":     role,
-        "loc":      loc,
-        "age":      age,
-        "skills":   skills,
-        "ini":      ini,
-        "bg":       bgs[idx],
-        "tc":       tcs[idx],
+        "id":             next_id("user"),
+        "name":           name,
+        "phone":          phone,
+        "email":          email,
+        "password":       pw,
+        "role":           role,
+        "loc":            loc,
+        "age":            age,
+        "skills":         skills,
+        "ini":            ini,
+        "bg":             bgs[idx],
+        "tc":             tcs[idx],
+        "email_verified": False,
     }
     DB["users"].append(new_user)
+
+    if verify_token:
+        DB["email_tokens"][verify_token] = new_user["id"]
 
     if role == "worker":
         new_worker_id = next_id("user")
@@ -348,7 +384,7 @@ def api_signup():
             "role":         skills[0] if skills else "Worker",
             "loc":          loc,
             "age":          age,
-            "rating":       3.5,      # default rating for new workers
+            "rating":       3.5,
             "review_count": 0,
             "jobs_done":    0,
             "skills":       skills,
@@ -360,12 +396,15 @@ def api_signup():
             "photo":        None,
             "bio":          "",
         })
-        # seed empty profile comments slot
         DB["profile_comments"]["worker"][new_worker_id] = []
 
     session["user_id"] = new_user["id"]
-    add_notification("verify", "Welcome to Serivasi!", f'Your account was created, {name}.')
-    return jsonify({"user": safe_user(new_user)}), 201
+    add_notification("verify", "Welcome to Ndangiranet!", f'Account created for {name}.', user_id=new_user["id"])
+    add_activity(new_user["id"], "signup", "Created account", "verify")
+    resp = {"user": safe_user(new_user)}
+    if verify_token:
+        resp["verify_token"] = verify_token
+    return jsonify(resp), 201
 
 
 @app.route("/api/auth/logout", methods=["POST"])
@@ -381,8 +420,47 @@ def api_forgot():
     user  = find_user(phone)
     if not user:
         return jsonify({"error": "No account found with that phone number or email."}), 404
-    # In production: generate token, send SMS/email. Here we just simulate it.
-    return jsonify({"message": f"Reset code sent to {user['phone'][-4:].rjust(len(user['phone']), '*')}. (Demo: code is 1234)"}), 200
+    token = "".join(random.choices(string.digits, k=6))
+    DB["reset_tokens"][token] = user["id"]
+    masked = user["phone"][-4:].rjust(len(user["phone"]), "*")
+    return jsonify({"message": f"Reset code sent to {masked}.", "demo_code": token}), 200
+
+
+@app.route("/api/auth/reset-password", methods=["POST"])
+def api_reset_password():
+    data   = request.json or {}
+    token  = data.get("token", "").strip()
+    new_pw = data.get("password", "").strip()
+    if not token or not new_pw:
+        return jsonify({"error": "Code and new password are required."}), 400
+    if len(new_pw) < 6:
+        return jsonify({"error": "Password must be at least 6 characters."}), 400
+    uid = DB["reset_tokens"].get(token)
+    if not uid:
+        return jsonify({"error": "Invalid or expired reset code."}), 400
+    user = next((u for u in DB["users"] if u["id"] == uid), None)
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+    user["password"] = new_pw
+    del DB["reset_tokens"][token]
+    return jsonify({"ok": True, "message": "Password updated. You can now sign in."}), 200
+
+
+@app.route("/api/auth/verify-email", methods=["POST"])
+def api_verify_email():
+    data  = request.json or {}
+    token = data.get("token", "").strip().upper()
+    uid   = DB["email_tokens"].get(token)
+    if not uid:
+        return jsonify({"error": "Invalid or expired verification code."}), 400
+    user = next((u for u in DB["users"] if u["id"] == uid), None)
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+    user["email_verified"] = True
+    del DB["email_tokens"][token]
+    add_activity(uid, "verify", "Verified email address", "verify")
+    add_notification("verify", "Email verified!", "Your email address has been verified.", user_id=uid)
+    return jsonify({"ok": True, "message": "Email verified successfully!"}), 200
 
 
 
@@ -760,6 +838,9 @@ def api_send_message(convo_id):
     if convo:
         convo["preview"] = msg["text"] or f"[{msg['type']}]"
         convo["unread"] = max(0, convo.get("unread", 0) - 1) if msg["dir"] == "out" else convo.get("unread", 0) + 1
+    uid = msg["sender_id"]
+    if uid and convo:
+        add_activity(uid, "message", f'Sent a message to {convo["name"]}', "msg")
     return jsonify({"ok": True, "message": msg}), 201
 
 @app.route("/api/messages/<int:convo_id>/media", methods=["POST"])
@@ -870,20 +951,32 @@ def api_employer_profile(eid):
 
 @app.route("/api/notifications", methods=["GET"])
 def api_notifications():
-    return jsonify(DB["notifications"])
+    uid = session.get("user_id")
+    notifs = [n for n in DB["notifications"] if n.get("user_id") == uid]
+    return jsonify(notifs)
 
 @app.route("/api/notifications/read-all", methods=["POST"])
 def api_read_all():
+    uid = session.get("user_id")
     for n in DB["notifications"]:
-        n["unread"] = False
+        if n.get("user_id") == uid:
+            n["unread"] = False
     return jsonify({"ok": True})
 
 @app.route("/api/notifications/<int:nid>/read", methods=["POST"])
 def api_read_one(nid):
-    notif = next((n for n in DB["notifications"] if n["id"] == nid), None)
+    uid = session.get("user_id")
+    notif = next((n for n in DB["notifications"] if n["id"] == nid and n.get("user_id") == uid), None)
     if notif:
         notif["unread"] = False
     return jsonify({"ok": True})
+
+@app.route("/api/activities", methods=["GET"])
+def api_activities():
+    uid = session.get("user_id")
+    if not uid:
+        return jsonify([])
+    return jsonify(DB["activities"].get(uid, []))
 
 
 # ─── API: UPLOAD ─────────────────────────────────────────────────────────────

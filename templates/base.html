@@ -435,6 +435,10 @@
           <input type="text" id="signup-phone" placeholder="+250 788 000 000" autocomplete="tel">
         </div>
         <div class="form-group">
+          <label>Email address <span style="font-size:11px;color:var(--t3)">(for verification)</span></label>
+          <input type="email" id="signup-email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="form-group">
           <label data-i18n="label_location">Location</label>
           <select id="signup-loc">
             <option>Gasabo, Kigali</option><option>Kicukiro, Kigali</option>
@@ -472,21 +476,70 @@
     <!-- FORGOT PASSWORD VIEW -->
     <div id="auth-forgot-view" style="display:none">
       <div class="modal-header">
-        <div class="modal-title" data-i18n="forgot_title">Reset your password</div>
+        <div class="modal-title">Reset your password</div>
         <button class="modal-close" onclick="document.getElementById('modal-auth').classList.add('hidden')">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="auth-success" id="forgot-success"></div>
-        <div class="auth-error"   id="forgot-error"></div>
-        <p style="font-size:13px;color:var(--t2);margin-bottom:14px" data-i18n="forgot_desc">Enter your phone number or email and we'll send you a reset code.</p>
+        <div class="auth-error" id="forgot-error"></div>
+        <!-- Step 1: request code -->
+        <div id="forgot-step1">
+          <p style="font-size:13px;color:var(--t2);margin-bottom:14px">Enter your phone number or email and we'll send you a reset code.</p>
+          <div class="form-group">
+            <label>Phone or email</label>
+            <input type="text" id="forgot-phone" placeholder="+250 788 000 000" autocomplete="off" name="forgot-ph"
+                   onkeydown="if(event.key==='Enter')doForgot()">
+          </div>
+        </div>
+        <!-- Step 2: enter code + new password (hidden until step 1 succeeds) -->
+        <div id="forgot-step2" style="display:none">
+          <div class="auth-success" id="forgot-code-hint" style="display:block;margin-bottom:12px"></div>
+          <div class="form-group">
+            <label>Reset code</label>
+            <input type="text" id="forgot-code" placeholder="6-digit code" autocomplete="off" name="forgot-code"
+                   style="letter-spacing:4px;font-size:18px;text-align:center">
+          </div>
+          <div class="form-group">
+            <label>New password</label>
+            <input type="password" id="forgot-newpw" placeholder="At least 6 characters" autocomplete="new-password"
+                   onkeydown="if(event.key==='Enter')doResetPassword()">
+          </div>
+          <div class="form-group">
+            <label>Confirm new password</label>
+            <input type="password" id="forgot-newpw2" placeholder="Repeat new password" autocomplete="new-password"
+                   onkeydown="if(event.key==='Enter')doResetPassword()">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" id="forgot-footer-step1">
+        <button class="btn" onclick="switchAuthView('login')">Back</button>
+        <button class="btn btn-primary" onclick="doForgot()">Send reset code</button>
+      </div>
+      <div class="modal-footer" id="forgot-footer-step2" style="display:none">
+        <button class="btn" onclick="resetForgotToStep1()">Back</button>
+        <button class="btn btn-primary" onclick="doResetPassword()">Set new password</button>
+      </div>
+    </div>
+
+    <!-- VERIFY EMAIL VIEW -->
+    <div id="auth-verify-view" style="display:none">
+      <div class="modal-header">
+        <div class="modal-title">Verify your email</div>
+        <button class="modal-close" onclick="document.getElementById('modal-auth').classList.add('hidden')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="auth-error"   id="verify-error"></div>
+        <div class="auth-success" id="verify-success"></div>
+        <div id="verify-hint" style="font-size:13px;color:var(--t2);margin-bottom:14px"></div>
         <div class="form-group">
-          <label data-i18n="label_phone">Phone or email</label>
-          <input type="text" id="forgot-phone" placeholder="+250 788 000 000" autocomplete="off" name="forgot-ph">
+          <label>Verification code</label>
+          <input type="text" id="verify-code" placeholder="6-character code" autocomplete="off" name="verify-c"
+                 style="letter-spacing:4px;font-size:18px;text-align:center;text-transform:uppercase"
+                 onkeydown="if(event.key==='Enter')doVerifyEmail()">
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn" onclick="switchAuthView('login')" data-i18n="btn_back">Back</button>
-        <button class="btn btn-primary" onclick="doForgot()" data-i18n="btn_send_code">Send reset code</button>
+        <button class="btn" onclick="document.getElementById('modal-auth').classList.add('hidden')">Later</button>
+        <button class="btn btn-primary" onclick="doVerifyEmail()">Verify email</button>
       </div>
     </div>
 
@@ -740,7 +793,7 @@ function openAuth(view) {
 }
 
 function switchAuthView(view) {
-  ["login","signup","forgot"].forEach(v => {
+  ["login","signup","forgot","verify"].forEach(v => {
     document.getElementById("auth-"+v+"-view").style.display = v===view ? "" : "none";
   });
   // clear errors
@@ -809,16 +862,26 @@ async function doSignup() {
     ? Array.from(document.querySelectorAll("#skills-grid .skill-chip.selected")).map(b=>b.textContent)
     : [];
 
+  const email = document.getElementById("signup-email").value.trim();
+
   const res = await fetch("/api/auth/signup", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({ name, age:parseInt(age)||0, phone, location:loc, role, skills, password:pw }),
+    body: JSON.stringify({ name, age:parseInt(age)||0, phone, email, location:loc, role, skills, password:pw }),
   });
   const data = await res.json();
 
   if (res.ok) {
     localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-    document.getElementById("modal-auth").classList.add("hidden");
+    if (data.verify_token) {
+      switchAuthView("verify");
+      document.getElementById("verify-hint").innerHTML =
+        `A verification code was generated for <strong>${email}</strong>.<br>` +
+        `<span style="background:var(--bg2);padding:2px 10px;border-radius:6px;font-family:monospace;font-size:15px;letter-spacing:3px">${data.verify_token}</span>` +
+        `<br><span style="font-size:11px;color:var(--t3)">(In production this would be emailed to you.)</span>`;
+    } else {
+      document.getElementById("modal-auth").classList.add("hidden");
+    }
     applyAuthState();
   } else {
     showErr(err, data.error || "Sign up failed. Please try again.");
@@ -828,20 +891,69 @@ async function doSignup() {
 // ── FORGOT PASSWORD ──────────────────────────────────────────────────────────
 async function doForgot() {
   const phone = document.getElementById("forgot-phone").value.trim();
-  const err = document.getElementById("forgot-error");
-  const suc = document.getElementById("forgot-success");
+  const err   = document.getElementById("forgot-error");
   if (!phone) { showErr(err, "Please enter your phone number or email."); return; }
-  const res = await fetch("/api/auth/forgot", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({ phone }),
-  });
+  const res  = await fetch("/api/auth/forgot", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({phone}) });
   const data = await res.json();
   if (res.ok) {
-    suc.textContent = data.message || "Reset code sent! Check your phone.";
-    suc.classList.add("show");
+    document.getElementById("forgot-step1").style.display        = "none";
+    document.getElementById("forgot-footer-step1").style.display = "none";
+    document.getElementById("forgot-step2").style.display        = "";
+    document.getElementById("forgot-footer-step2").style.display = "";
+    const hint = document.getElementById("forgot-code-hint");
+    hint.textContent = data.message + (data.demo_code ? ` Demo code: ${data.demo_code}` : "");
+    hint.classList.add("show");
   } else {
     showErr(err, data.error || "Could not find that account.");
+  }
+}
+
+function resetForgotToStep1() {
+  document.getElementById("forgot-step1").style.display        = "";
+  document.getElementById("forgot-footer-step1").style.display = "";
+  document.getElementById("forgot-step2").style.display        = "none";
+  document.getElementById("forgot-footer-step2").style.display = "none";
+  document.getElementById("forgot-code-hint").classList.remove("show");
+}
+
+async function doResetPassword() {
+  const token  = document.getElementById("forgot-code").value.trim();
+  const pw     = document.getElementById("forgot-newpw").value.trim();
+  const pw2    = document.getElementById("forgot-newpw2").value.trim();
+  const err    = document.getElementById("forgot-error");
+  if (!token)    { showErr(err, "Please enter the reset code."); return; }
+  if (!pw)       { showErr(err, "Please enter a new password."); return; }
+  if (pw !== pw2){ showErr(err, "Passwords do not match."); return; }
+  if (pw.length < 6) { showErr(err, "Password must be at least 6 characters."); return; }
+  const res  = await fetch("/api/auth/reset-password", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({token, password:pw}) });
+  const data = await res.json();
+  if (res.ok) {
+    resetForgotToStep1();
+    switchAuthView("login");
+    const suc = document.getElementById("login-success");
+    suc.textContent = data.message || "Password updated! Please sign in.";
+    suc.classList.add("show");
+  } else {
+    showErr(err, data.error || "Reset failed. Please try again.");
+  }
+}
+
+// ── EMAIL VERIFICATION ────────────────────────────────────────────────────────
+async function doVerifyEmail() {
+  const token = document.getElementById("verify-code").value.trim().toUpperCase();
+  const err   = document.getElementById("verify-error");
+  const suc   = document.getElementById("verify-success");
+  if (!token) { showErr(err, "Please enter the verification code."); return; }
+  const res  = await fetch("/api/auth/verify-email", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({token}) });
+  const data = await res.json();
+  if (res.ok) {
+    suc.textContent = data.message || "Email verified!";
+    suc.classList.add("show");
+    const u = JSON.parse(localStorage.getItem(USER_KEY) || "{}");
+    if (u) { u.email_verified = true; localStorage.setItem(USER_KEY, JSON.stringify(u)); }
+    setTimeout(() => document.getElementById("modal-auth").classList.add("hidden"), 1800);
+  } else {
+    showErr(err, data.error || "Verification failed.");
   }
 }
 
