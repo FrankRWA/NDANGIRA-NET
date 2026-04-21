@@ -3,8 +3,11 @@
 
 {% block head %}
 <style>
+/* ── Lock page scroll so only the chat itself scrolls ── */
+html, body { overflow:hidden; height:100%; }
+
 /* ── Fullscreen-style chat layout ── */
-.chat-page { display:flex; height:calc(100vh - 100px); min-height:480px; border:0.5px solid var(--bdr2); border-radius:14px; overflow:hidden; background:var(--bg1); margin:0 auto; max-width:1000px; }
+.chat-page { display:flex; height:calc(100dvh - 54px); border:0.5px solid var(--bdr2); border-top:none; border-radius:0; overflow:hidden; background:var(--bg1); margin:0; max-width:100%; }
 
 /* ── Sidebar ── */
 .chat-sb { width:300px; min-width:300px; border-right:0.5px solid var(--bdr); display:flex; flex-direction:column; background:var(--bg1); }
@@ -101,10 +104,6 @@
 {% endblock %}
 
 {% block content %}
-<div style="padding:16px 16px 0;max-width:1032px;margin:0 auto">
-  <div style="font-size:18px;font-weight:600;color:var(--t1);margin-bottom:14px">Messages</div>
-</div>
-<div style="padding:0 8px 24px">
 <div class="chat-page" id="chat-page">
 
   <!-- ── Sidebar ── -->
@@ -215,7 +214,6 @@
   </div>
 
 </div>
-</div>
 
 <!-- New conversation modal -->
 <div class="nc-modal" id="nc-modal" onclick="if(event.target===this)closeNewChat()">
@@ -262,8 +260,13 @@ function renderBubble(m) {
     </div>`;
   }
   if (m.type === 'video' && m.media_url) {
-    return `<div class="bubble ${m.dir}" style="padding:4px;max-width:260px">
-      <video src="${m.media_url}" controls style="width:100%;border-radius:10px;display:block;max-height:180px"></video>
+    const vid = 'v' + Math.random().toString(36).slice(2,7);
+    return `<div class="bubble ${m.dir}" style="padding:4px;max-width:260px;position:relative">
+      <video id="${vid}" src="${m.media_url}" controls playsinline style="width:100%;border-radius:10px;display:block;max-height:180px"></video>
+      <button onclick="(function(){var v=document.getElementById('${vid}');if(v.requestFullscreen)v.requestFullscreen();else if(v.webkitEnterFullscreen)v.webkitEnterFullscreen();})()" title="Full screen"
+        style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.8"><path d="M1 6V1h5M10 1h5v5M15 10v5h-5M6 15H1v-5"/></svg>
+      </button>
     </div>`;
   }
   if (m.type === 'audio' && m.media_url) {

@@ -233,6 +233,17 @@
         <button class="sf-chip" data-group="price" data-val="120000" onclick="toggleSfChip(this)">Under 120k</button>
       </div>
       <div class="sf-row">
+        <span class="sf-label">Skill</span>
+        <button class="sf-chip" data-group="skill" data-val="House maid"      onclick="toggleSfChip(this)">Maid</button>
+        <button class="sf-chip" data-group="skill" data-val="Driver"          onclick="toggleSfChip(this)">Driver</button>
+        <button class="sf-chip" data-group="skill" data-val="Plumber"         onclick="toggleSfChip(this)">Plumber</button>
+        <button class="sf-chip" data-group="skill" data-val="Guard (Umuzamu)" onclick="toggleSfChip(this)">Guard</button>
+        <button class="sf-chip" data-group="skill" data-val="Cleaner"         onclick="toggleSfChip(this)">Cleaner</button>
+        <button class="sf-chip" data-group="skill" data-val="Gardener"        onclick="toggleSfChip(this)">Gardener</button>
+        <button class="sf-chip" data-group="skill" data-val="Carpenter"       onclick="toggleSfChip(this)">Carpenter</button>
+        <button class="sf-chip" data-group="skill" data-val="Welder"          onclick="toggleSfChip(this)">Welder</button>
+      </div>
+      <div class="sf-row">
         <span class="sf-label">More</span>
         <button class="sf-chip" data-group="flag" data-val="avail"    onclick="toggleSfChip(this)">Available only</button>
         <button class="sf-chip" data-group="flag" data-val="verified" onclick="toggleSfChip(this)">Verified workers</button>
@@ -676,9 +687,13 @@ function handleNavSearch(e) { if (e.key === "Enter") doNavSearch(); }
 
 function toggleSfChip(btn) {
   const group = btn.dataset.group;
-  // single-select per group
   document.querySelectorAll(`.sf-chip[data-group="${group}"]`).forEach(b => b.classList.remove("on"));
   btn.classList.add("on");
+  if (group === "skill") {
+    document.querySelectorAll('.sf-chip[data-group="type"]').forEach(b => b.classList.remove("on"));
+    const wc = document.querySelector('.sf-chip[data-group="type"][data-val="workers"]');
+    if (wc) wc.classList.add("on");
+  }
 }
 
 function clearFilters() {
@@ -695,19 +710,20 @@ function doNavSearch() {
   const loc   = document.querySelector('.sf-chip[data-group="loc"].on')?.dataset.val   || "";
   const price = document.querySelector('.sf-chip[data-group="price"].on')?.dataset.val || "";
   const flag  = document.querySelector('.sf-chip[data-group="flag"].on')?.dataset.val  || "";
+  const skill = document.querySelector('.sf-chip[data-group="skill"].on')?.dataset.val || "";
 
   const params = new URLSearchParams();
   if (q)     params.set("q", q);
   if (loc)   params.set("loc", loc.toLowerCase());
   if (price) params.set("price", price);
+  if (skill) params.set("skill", skill.toLowerCase());
   if (flag === "avail")    params.set("avail", "true");
   if (flag === "verified") params.set("verified", "true");
   if (flag === "top")      params.set("top", "true");
 
-  if (type === "workers") {
+  if (type === "workers" || skill) {
     window.location.href = "/workers?" + params.toString();
   } else if (type === "both") {
-    // go to houses with q, workers opens in second tab
     if (q) window.open("/workers?" + params.toString(), "_blank");
     window.location.href = "/houses?" + params.toString();
   } else {

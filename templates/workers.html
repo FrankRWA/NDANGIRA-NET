@@ -77,6 +77,7 @@ filterWorkers();
   const p = new URLSearchParams(window.location.search);
   if (p.get("q"))       { document.getElementById("search").value = p.get("q"); }
   if (p.get("loc"))     { const s=document.getElementById("filter-loc"); if(s) for(let o of s.options) if(o.value.toLowerCase()===p.get("loc").toLowerCase()){s.value=o.value;break;} }
+  if (p.get("skill"))   { const s=document.getElementById("filter-skill"); if(s) for(let o of s.options) if(o.value.toLowerCase()===p.get("skill").toLowerCase()){s.value=o.value;break;} }
   if (p.get("verified")==="true") { chips.verified=true; document.getElementById("chip-verified")?.classList.add("active"); }
   if (p.get("top")==="true")      { chips.top=true;      document.getElementById("chip-top")?.classList.add("active"); }
   if (p.get("avail")==="true")    { chips.avail2=true;   document.getElementById("chip-avail2")?.classList.add("active"); }
