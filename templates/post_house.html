@@ -4,26 +4,26 @@
 {% block content %}
 <div class="container" style="max-width:600px">
   <div style="margin-bottom:16px"><a href="{{ url_for('houses') }}" class="btn" style="font-size:12px">&larr; Back</a></div>
-  <div class="page-title">Post a house listing</div>
+  <div class="page-title" data-i18n="post_house_title">Post a house listing</div>
   <div class="card">
     <form id="post-form" enctype="multipart/form-data">
 
       <div class="form-group">
-        <label>Photos of the house</label>
+        <label data-i18n="label_photos">Photos of the house</label>
         <label class="upload-zone">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="1.4">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
             <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
           </svg>
-          <span>Tap to upload house photos</span>
+          <span data-i18n="upload_photos">Tap to upload house photos</span>
           <input type="file" name="photo" accept="image/*" multiple style="display:none" onchange="previewPhotos(event)">
         </label>
         <div class="photo-preview" id="photo-preview"></div>
       </div>
 
       <div class="form-grid">
-        <div class="form-group"><label>Title</label><input type="text" name="title" placeholder="e.g. Cozy 2BR in Gasabo" autocomplete="off" required></div>
-        <div class="form-group"><label>Monthly rent (RWF)</label><input type="number" name="price" placeholder="50000" min="5000" autocomplete="off" required></div>
+        <div class="form-group"><label data-i18n="label_title">Title</label><input type="text" name="title" placeholder="e.g. Cozy 2BR in Gasabo" autocomplete="off" required></div>
+        <div class="form-group"><label data-i18n="label_rent">Monthly rent (RWF)</label><input type="number" name="price" placeholder="50000" min="5000" autocomplete="off" required></div>
       </div>
       <div class="form-grid">
         <div class="form-group">
@@ -35,7 +35,7 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Bedrooms</label>
+          <label data-i18n="label_bedrooms">Bedrooms</label>
           <select name="rooms">
             <option value="1">Studio / 1 room</option>
             <option value="2">2 bedrooms</option>
@@ -45,15 +45,15 @@
         </div>
       </div>
       <div class="form-group">
-        <label>Landlord name</label>
-        <input type="text" name="landlord" placeholder="Your full name" autocomplete="off" required>
+        <label data-i18n="label_landlord">Landlord name</label>
+        <input type="text" name="landlord" placeholder="Your full name" autocomplete="off" required data-i18n="label_landlord_ph">
       </div>
       <div class="form-group">
-        <label>Description</label>
+        <label data-i18n="label_desc">Description</label>
         <textarea name="desc" autocomplete="off" placeholder="Describe the house: size, condition, nearby landmarks..."></textarea>
       </div>
       <div class="form-group">
-        <label>Included features</label>
+        <label data-i18n="label_features">Included features</label>
         <div class="skills-grid" style="margin-top:6px">
           {% for f in ["Water","Electricity","Furnished","Internet","Garden","Parking","Security guard","Compound","Near transport","Near market"] %}
             <button type="button" class="skill-chip" onclick="toggleFeature(this,'{{ f }}')">{{ f }}</button>
@@ -63,7 +63,7 @@
       </div>
       <div style="display:flex;gap:10px;margin-top:8px">
         <a href="{{ url_for('houses') }}" class="btn" style="flex:1;justify-content:center;text-decoration:none">Cancel</a>
-        <button type="submit" class="btn btn-primary" style="flex:2">Publish listing</button>
+        <button type="submit" class="btn btn-primary" style="flex:2" data-i18n="btn_publish">Publish listing</button>
       </div>
     </form>
   </div>

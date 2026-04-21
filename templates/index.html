@@ -3,11 +3,11 @@
 
 {% block content %}
 <div class="hero">
-  <h1 data-i18n="heroTitle">Find your next affordable home in Rwanda</h1>
-  <p data-i18n="heroSub">Browse verified listings posted by real landlords near you.</p>
+  <h1 data-i18n="hero_title">Find your next affordable home in Rwanda</h1>
+  <p data-i18n="hero_sub">Browse verified listings posted by real landlords near you.</p>
   <div class="hero-btns">
-    <a href="{{ url_for('houses') }}" class="btn btn-primary">Browse all houses</a>
-    <a href="{{ url_for('post_house_page') }}" class="btn">Post a listing</a>
+    <a href="{{ url_for('houses') }}" class="btn btn-primary" data-i18n="home_browse_houses">Browse all houses</a>
+    <a href="{{ url_for('post_house_page') }}" class="btn" data-i18n="home_post_listing">Post a listing</a>
   </div>
 </div>
 
@@ -19,7 +19,7 @@
       <path d="M2 6.5 8 2l6 4.5V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6.5z"/>
       <path d="M6 15V9h4v6"/>
     </svg>
-    Featured houses near you
+    <span data-i18n="home_featured_houses">Featured houses near you</span>
   </div>
   <div class="house-grid">
     {% for h in houses %}
@@ -56,18 +56,18 @@
   </div>
 
   <div style="text-align:center;margin-bottom:32px">
-    <a href="{{ url_for('houses') }}" class="btn">See all house listings &rarr;</a>
+    <a href="{{ url_for('houses') }}" class="btn" data-i18n="home_see_all_houses">See all house listings →</a>
   </div>
 
   <!-- ── Post a house CTA banner ── -->
   <div style="background:var(--gl);border-radius:14px;padding:24px 28px;margin-bottom:36px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
     <div style="flex:1;min-width:200px">
-      <div style="font-size:16px;font-weight:600;color:var(--gt);margin-bottom:4px">Are you a landlord?</div>
-      <div style="font-size:13px;color:var(--gd);line-height:1.6">List your house on Serivasi and reach thousands of renters across Rwanda. It's free and takes less than 2 minutes.</div>
+      <div style="font-size:16px;font-weight:600;color:var(--gt);margin-bottom:4px" data-i18n="home_landlord_q">Are you a landlord?</div>
+      <div style="font-size:13px;color:var(--gd);line-height:1.6" data-i18n="home_landlord_desc">List your house and reach thousands of renters across Rwanda. Free &amp; takes 2 minutes.</div>
     </div>
     <a href="{{ url_for('post_house_page') }}" style="display:inline-flex;align-items:center;gap:8px;padding:11px 24px;border-radius:10px;background:var(--g);color:#fff;font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap;flex-shrink:0">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
-      Post a house listing
+      <span data-i18n="home_post_house_cta">Post a house listing</span>
     </a>
   </div>
 
@@ -76,7 +76,7 @@
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--g)" stroke-width="1.5">
       <circle cx="8" cy="6" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
     </svg>
-    Workers available now
+    <span data-i18n="home_workers_title">Workers available now</span>
   </div>
   <div class="worker-grid">
     {% for w in workers %}
@@ -110,7 +110,7 @@
   </div>
 
   <div style="text-align:center;margin-bottom:32px">
-    <a href="{{ url_for('workers') }}" class="btn">See all workers &rarr;</a>
+    <a href="{{ url_for('workers') }}" class="btn" data-i18n="home_see_all_workers">See all workers →</a>
   </div>
 
 </div>

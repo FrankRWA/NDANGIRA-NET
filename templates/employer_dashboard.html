@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-    <div class="page-title" style="margin-bottom:0">Employer dashboard</div>
+    <div class="page-title" style="margin-bottom:0" data-i18n="dash_employer">Employer dashboard</div>
     <a href="{{ url_for('post_house_page') }}" class="btn btn-primary">+ Post a house</a>
   </div>
   <div class="stats-grid">
@@ -13,9 +13,9 @@
     <div class="stat-card"><div class="stat-num">2</div><div class="stat-label">Workers hired</div></div>
   </div>
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab(this,'tab-listings')">My listings</button>
-    <button class="tab-btn" onclick="switchTab(this,'tab-workers')">Hired workers</button>
-    <button class="tab-btn" onclick="switchTab(this,'tab-activity');loadActivity()">Activity</button>
+    <button class="tab-btn active" onclick="switchTab(this,'tab-listings')" data-i18n="tab_listings">My listings</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-workers')" data-i18n="tab_hired">Hired workers</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-activity');loadActivity()" data-i18n="tab_activity">Activity</button>
   </div>
   <div class="tab-content active" id="tab-listings">
     {% for h in houses %}

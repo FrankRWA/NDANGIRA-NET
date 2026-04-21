@@ -2,25 +2,25 @@
 {% block title %}Find Workers{% endblock %}
 {% block content %}
 <div class="container">
-  <div class="page-title">Find workers</div>
+  <div class="page-title" data-i18n="page_workers">Find workers</div>
   <div class="filter-row">
-    <input type="text" id="search" placeholder="Name or skill..." autocomplete="off" name="worker-search" style="flex:2;min-width:140px" oninput="filterWorkers()">
+    <input type="text" id="search" placeholder="Name or skill..." data-i18n="workers_search_ph" autocomplete="off" name="worker-search" style="flex:2;min-width:140px" oninput="filterWorkers()">
     <select id="filter-skill" onchange="filterWorkers()" style="min-width:140px">
-      <option value="">All skills</option>
+      <option value="" data-i18n="filter_all_skills">All skills</option>
       <option>House maid</option><option>Guard (Umuzamu)</option><option>Driver</option>
       <option>Plumber</option><option>Welder</option><option>Carpenter</option>
       <option>Gardener</option><option>Cleaner</option>
     </select>
     <select id="filter-loc" onchange="filterWorkers()" style="min-width:130px">
-      <option value="">All areas</option>
+      <option value="" data-i18n="filter_all_areas">All areas</option>
       <option value="kigali">Kigali</option><option value="musanze">Musanze</option>
       <option value="huye">Huye</option>
     </select>
-    <button class="chip active" id="chip-avail"     onclick="toggleChip('avail')">Available</button>
-    <button class="chip"        id="chip-verified"  onclick="toggleChip('verified')">Verified only</button>
-    <button class="chip"        id="chip-top"       onclick="toggleChip('top')">Top rated</button>
+    <button class="chip active" id="chip-avail"    onclick="toggleChip('avail')"    data-i18n="chip_avail">Available</button>
+    <button class="chip"        id="chip-verified" onclick="toggleChip('verified')" data-i18n="chip_verified">Verified only</button>
+    <button class="chip"        id="chip-top"      onclick="toggleChip('top')"      data-i18n="chip_top">Top rated</button>
   </div>
-  <div class="section-title">All workers <span id="count" style="font-size:12px;color:var(--t2);font-weight:400"></span></div>
+  <div class="section-title"><span data-i18n="workers_all">All workers</span> <span id="count" style="font-size:12px;color:var(--t2);font-weight:400"></span></div>
   <div class="worker-grid" id="workers-grid">
     {% for w in workers %}
     <a class="worker-card" href="/workers/{{ w.id }}"

@@ -27,7 +27,7 @@
 {% endblock %}
 {% block content %}
 <div class="container">
-  <div class="page-title">Worker dashboard</div>
+  <div class="page-title" data-i18n="dash_worker">Worker dashboard</div>
   <div class="card" style="margin-bottom:18px">
     <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
 
@@ -65,9 +65,9 @@
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab(this,'tab-jobs')">Job requests</button>
-    <button class="tab-btn" onclick="switchTab(this,'tab-verification')">Verification</button>
-    <button class="tab-btn" onclick="switchTab(this,'tab-activity');loadActivity()">Activity</button>
+    <button class="tab-btn active" onclick="switchTab(this,'tab-jobs')" data-i18n="tab_jobs">Job requests</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-verification')" data-i18n="tab_verification">Verification</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-activity');loadActivity()" data-i18n="tab_activity">Activity</button>
   </div>
   <div class="tab-content active" id="tab-jobs">
     {% for job in [{"title":"House maid - 3 days/week","employer":"Marie Kayitesi","loc":"Gasabo","status":"pending"},{"title":"Deep cleaning - one time","employer":"Patrick Nkurunziza","loc":"Kicukiro","status":"active"},{"title":"Laundry helper","employer":"Chantal Uwimana","loc":"Nyarugenge","status":"active"}] %}

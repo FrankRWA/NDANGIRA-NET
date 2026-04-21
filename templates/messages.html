@@ -109,7 +109,7 @@ html, body { overflow:hidden; height:100%; }
   <!-- ── Sidebar ── -->
   <div class="chat-sb">
     <div class="chat-sb-head">
-      <div class="chat-sb-title">Chats</div>
+      <div class="chat-sb-title" data-i18n="page_messages">Messages</div>
       <div class="chat-sb-search">
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="var(--t3)" stroke-width="1.6"><circle cx="5.5" cy="5.5" r="4.5"/><path d="m9 9 4 4"/></svg>
         <input type="text" id="convo-search" placeholder="Search conversations…" autocomplete="off" name="convo-s" oninput="filterConvos(this.value)">
@@ -142,7 +142,7 @@ html, body { overflow:hidden; height:100%; }
     <!-- New conversation button -->
     <button class="new-chat-btn" onclick="openNewChat()">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3v10M3 8h10"/></svg>
-      <span>New conversation</span>
+      <span data-i18n="new_convo">New conversation</span>
     </button>
   </div>
 
@@ -201,7 +201,7 @@ html, body { overflow:hidden; height:100%; }
       </div>
       <div class="composer-row">
         <textarea class="composer-input" id="msg-input" rows="1" autocomplete="off" name="chat-msg"
-                  placeholder="Type a message…"
+                  placeholder="Type a message…" data-i18n="msg_input_ph"
                   onkeydown="handleKey(event)"
                   oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
         <button class="send-btn" onclick="sendMsg()">
