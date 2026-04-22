@@ -3,8 +3,11 @@
 
 {% block head %}
 <style>
+/* ── Lock page scroll so only the chat itself scrolls ── */
+html, body { overflow:hidden; height:100%; }
+
 /* ── Fullscreen-style chat layout ── */
-.chat-page { display:flex; height:calc(100vh - 100px); min-height:480px; border:0.5px solid var(--bdr2); border-radius:14px; overflow:hidden; background:var(--bg1); margin:0 auto; max-width:1000px; }
+.chat-page { display:flex; height:calc(100dvh - 54px); border:0.5px solid var(--bdr2); border-top:none; border-radius:0; overflow:hidden; background:var(--bg1); margin:0; max-width:100%; }
 
 /* ── Sidebar ── */
 .chat-sb { width:300px; min-width:300px; border-right:0.5px solid var(--bdr); display:flex; flex-direction:column; background:var(--bg1); }
@@ -101,16 +104,12 @@
 {% endblock %}
 
 {% block content %}
-<div style="padding:16px 16px 0;max-width:1032px;margin:0 auto">
-  <div style="font-size:18px;font-weight:600;color:var(--t1);margin-bottom:14px">Messages</div>
-</div>
-<div style="padding:0 8px 24px">
 <div class="chat-page" id="chat-page">
 
   <!-- ── Sidebar ── -->
   <div class="chat-sb">
     <div class="chat-sb-head">
-      <div class="chat-sb-title">Chats</div>
+      <div class="chat-sb-title" data-i18n="page_messages">Messages</div>
       <div class="chat-sb-search">
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="var(--t3)" stroke-width="1.6"><circle cx="5.5" cy="5.5" r="4.5"/><path d="m9 9 4 4"/></svg>
         <input type="text" id="convo-search" placeholder="Search conversations…" autocomplete="off" name="convo-s" oninput="filterConvos(this.value)">
@@ -143,7 +142,7 @@
     <!-- New conversation button -->
     <button class="new-chat-btn" onclick="openNewChat()">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3v10M3 8h10"/></svg>
-      <span>New conversation</span>
+      <span data-i18n="new_convo">New conversation</span>
     </button>
   </div>
 
@@ -202,7 +201,7 @@
       </div>
       <div class="composer-row">
         <textarea class="composer-input" id="msg-input" rows="1" autocomplete="off" name="chat-msg"
-                  placeholder="Type a message…"
+                  placeholder="Type a message…" data-i18n="msg_input_ph"
                   onkeydown="handleKey(event)"
                   oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
         <button class="send-btn" onclick="sendMsg()">
@@ -214,7 +213,6 @@
     </div>
   </div>
 
-</div>
 </div>
 
 <!-- New conversation modal -->
@@ -262,8 +260,13 @@ function renderBubble(m) {
     </div>`;
   }
   if (m.type === 'video' && m.media_url) {
-    return `<div class="bubble ${m.dir}" style="padding:4px;max-width:260px">
-      <video src="${m.media_url}" controls style="width:100%;border-radius:10px;display:block;max-height:180px"></video>
+    const vid = 'v' + Math.random().toString(36).slice(2,7);
+    return `<div class="bubble ${m.dir}" style="padding:4px;max-width:260px;position:relative">
+      <video id="${vid}" src="${m.media_url}" controls playsinline style="width:100%;border-radius:10px;display:block;max-height:180px"></video>
+      <button onclick="(function(){var v=document.getElementById('${vid}');if(v.requestFullscreen)v.requestFullscreen();else if(v.webkitEnterFullscreen)v.webkitEnterFullscreen();})()" title="Full screen"
+        style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.8"><path d="M1 6V1h5M10 1h5v5M15 10v5h-5M6 15H1v-5"/></svg>
+      </button>
     </div>`;
   }
   if (m.type === 'audio' && m.media_url) {
@@ -467,24 +470,38 @@ function filterNewChat(q) {
   });
 }
 
-function startConvo(wid, name, ini, bg, tc, role) {
+async function startConvo(wid, name, ini, bg, tc, role) {
   closeNewChat();
   const existing = CONVOS.find(c => c.name === name);
   if (existing) { openConvo(existing.id); return; }
-  const newId = Date.now();
-  CONVOS.push({ id:newId, name, ini, bg, tc, role, online:false, unread:0, preview:'New conversation' });
-  const list = document.getElementById('convo-list');
-  const div  = document.createElement('div');
-  div.className = 'convo-item'; div.id = `ci-${newId}`;
-  div.dataset.id = newId; div.dataset.name = name.toLowerCase();
-  div.onclick = () => openConvo(newId);
-  div.innerHTML = `<div class="convo-av"><div class="avatar av-sm" style="background:${bg};color:${tc}">${ini}</div></div>
-    <div class="convo-body"><div class="convo-name">${name}</div><div class="convo-preview" id="prev-${newId}">New conversation</div></div>
-    <div class="convo-meta"><span class="convo-time">now</span></div>`;
-  list.insertBefore(div, list.firstChild);
-  openConvo(newId);
+
+  const res   = await fetch('/api/conversations', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ name, ini, bg, tc, role }),
+  });
+  const convo = await res.json();
+
+  if (!CONVOS.find(c => c.id === convo.id)) {
+    CONVOS.push(convo);
+    const list = document.getElementById('convo-list');
+    const div  = document.createElement('div');
+    div.className = 'convo-item'; div.id = `ci-${convo.id}`;
+    div.dataset.id = convo.id; div.dataset.name = name.toLowerCase();
+    div.onclick = () => openConvo(convo.id);
+    div.innerHTML = `<div class="convo-av"><div class="avatar av-sm" style="background:${bg};color:${tc}">${ini}</div></div>
+      <div class="convo-body"><div class="convo-name">${name}</div><div class="convo-preview" id="prev-${convo.id}">New conversation</div></div>
+      <div class="convo-meta"><span class="convo-time">now</span></div>`;
+    list.insertBefore(div, list.firstChild);
+  }
+  openConvo(convo.id);
 }
 
+{% if open_worker_id %}
+const _openWorker = {{ workers | tojson }}.find(w => w.id === {{ open_worker_id }});
+if (_openWorker) startConvo(_openWorker.id, _openWorker.name, _openWorker.ini, _openWorker.bg, _openWorker.tc, _openWorker.role);
+else openConvo(activeId);
+{% else %}
 openConvo(activeId);
+{% endif %}
 </script>
 {% endblock %}

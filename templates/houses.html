@@ -4,38 +4,38 @@
 {% block content %}
 <div class="container">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-    <div class="page-title" style="margin-bottom:0">House listings</div>
-    <a href="{{ url_for('post_house_page') }}" class="btn btn-primary">+ Post a house</a>
+    <div class="page-title" style="margin-bottom:0" data-i18n="page_houses">House listings</div>
+    <a href="{{ url_for('post_house_page') }}" class="btn btn-primary" data-i18n="post_house_btn">+ Post a house</a>
   </div>
 
   <div class="filter-row">
-    <input type="text" id="search" placeholder="Search location or title..." autocomplete="off" name="house-search" style="flex:2;min-width:140px" oninput="filterHouses()">
+    <input type="text" id="search" placeholder="Search location or title..." autocomplete="off" name="house-search" style="flex:2;min-width:140px" oninput="filterHouses()" data-i18n="houses_search_ph">
     <select id="filter-price" onchange="filterHouses()" style="min-width:140px">
-      <option value="">Any price</option>
+      <option value="" data-i18n="filter_any_price">Any price</option>
       <option value="25000">Under 25k RWF</option>
       <option value="50000">Under 50k RWF</option>
       <option value="80000">Under 80k RWF</option>
       <option value="120000">Under 120k RWF</option>
     </select>
     <select id="filter-loc" onchange="filterHouses()" style="min-width:130px">
-      <option value="">All areas</option>
+      <option value="" data-i18n="filter_all_areas">All areas</option>
       <option value="kigali">Kigali</option>
       <option value="musanze">Musanze</option>
       <option value="huye">Huye</option>
       <option value="rubavu">Rubavu</option>
     </select>
     <select id="filter-rooms" onchange="filterHouses()" style="min-width:130px">
-      <option value="0">Any bedrooms</option>
+      <option value="0" data-i18n="filter_any_rooms">Any bedrooms</option>
       <option value="1">Studio / 1 bedroom</option>
       <option value="2">2 bedrooms</option>
       <option value="3">3+ bedrooms</option>
     </select>
-    <button class="chip active" id="chip-avail" onclick="toggleChip()">Available only</button>
+    <button class="chip active" id="chip-avail" onclick="toggleChip()" data-i18n="chip_avail_only">Available only</button>
   </div>
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
     <div class="section-title" style="margin-bottom:0">
-      All listings <span id="count" style="font-size:12px;color:var(--t2);font-weight:400"></span>
+      <span data-i18n="all_listings">All listings</span> <span id="count" style="font-size:12px;color:var(--t2);font-weight:400"></span>
     </div>
   </div>
 

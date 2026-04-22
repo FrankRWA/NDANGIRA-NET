@@ -27,7 +27,7 @@
 {% endblock %}
 {% block content %}
 <div class="container">
-  <div class="page-title">Worker dashboard</div>
+  <div class="page-title" data-i18n="dash_worker">Worker dashboard</div>
   <div class="card" style="margin-bottom:18px">
     <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
 
@@ -65,8 +65,9 @@
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab(this,'tab-jobs')">Job requests</button>
-    <button class="tab-btn" onclick="switchTab(this,'tab-verification')">Verification</button>
+    <button class="tab-btn active" onclick="switchTab(this,'tab-jobs')" data-i18n="tab_jobs">Job requests</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-verification')" data-i18n="tab_verification">Verification</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-activity');loadActivity()" data-i18n="tab_activity">Activity</button>
   </div>
   <div class="tab-content active" id="tab-jobs">
     {% for job in [{"title":"House maid - 3 days/week","employer":"Marie Kayitesi","loc":"Gasabo","status":"pending"},{"title":"Deep cleaning - one time","employer":"Patrick Nkurunziza","loc":"Kicukiro","status":"active"},{"title":"Laundry helper","employer":"Chantal Uwimana","loc":"Nyarugenge","status":"active"}] %}
@@ -78,6 +79,10 @@
     </div>
     {% endfor %}
   </div>
+  <div class="tab-content" id="tab-activity">
+    <div id="activity-list"><div style="padding:24px;text-align:center;font-size:13px;color:var(--t2)">Loading…</div></div>
+  </div>
+
   <div class="tab-content" id="tab-verification">
     <div class="card">
       {% for step in ["Phone number verified","National ID submitted","Skills test passed","Background check complete"] %}
@@ -203,6 +208,39 @@ async function applyAvatar() {
     });
   }
   closeAvatarPicker();
+}
+
+const ACTIVITY_ICONS = {
+  login:   `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#185FA5" stroke-width="1.4"><path d="M2 8l4 4 8-8"/></svg>`,
+  signup:  `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#185FA5" stroke-width="1.4"><path d="M2 8l4 4 8-8"/></svg>`,
+  verify:  `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#185FA5" stroke-width="1.4"><path d="M2 8l4 4 8-8"/></svg>`,
+  message: `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#185FA5" stroke-width="1.4"><path d="M14 3H2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h3l3 3 3-3h3a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1z"/></svg>`,
+  house:   `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#0F6E56" stroke-width="1.4"><path d="M2 6.5 8 2l6 4.5V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6.5z"/></svg>`,
+  star:    `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#EF9F27" stroke-width="1.4"><path d="M8 2l1.8 3.6L14 6.4l-3 2.9.7 4.1L8 11.4l-3.7 2 .7-4.1L2 6.4l4.2-.8z"/></svg>`,
+};
+const ACTIVITY_BG = { login:"#E6F1FB", signup:"#E6F1FB", verify:"#E6F1FB", message:"#E6F1FB", house:"#E1F5EE", star:"#FAEEDA" };
+
+let _activityLoaded = false;
+async function loadActivity() {
+  if (_activityLoaded) return;
+  _activityLoaded = true;
+  const res  = await fetch("/api/activities");
+  const acts = await res.json();
+  const el   = document.getElementById("activity-list");
+  if (!acts.length) {
+    el.innerHTML = "<div style='padding:24px;text-align:center;font-size:13px;color:var(--t2)'>No activity yet.</div>";
+    return;
+  }
+  el.innerHTML = acts.map(a => `
+    <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:0.5px solid var(--bdr)">
+      <div style="width:32px;height:32px;border-radius:50%;background:${ACTIVITY_BG[a.type]||'#E1F5EE'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        ${ACTIVITY_ICONS[a.type] || ACTIVITY_ICONS.star}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;color:var(--t1)">${a.description}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px">${a.date} &middot; ${a.time}</div>
+      </div>
+    </div>`).join("");
 }
 </script>
 {% endblock %}

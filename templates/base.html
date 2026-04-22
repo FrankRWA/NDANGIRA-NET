@@ -233,6 +233,17 @@
         <button class="sf-chip" data-group="price" data-val="120000" onclick="toggleSfChip(this)">Under 120k</button>
       </div>
       <div class="sf-row">
+        <span class="sf-label">Skill</span>
+        <button class="sf-chip" data-group="skill" data-val="House maid"      onclick="toggleSfChip(this)">Maid</button>
+        <button class="sf-chip" data-group="skill" data-val="Driver"          onclick="toggleSfChip(this)">Driver</button>
+        <button class="sf-chip" data-group="skill" data-val="Plumber"         onclick="toggleSfChip(this)">Plumber</button>
+        <button class="sf-chip" data-group="skill" data-val="Guard (Umuzamu)" onclick="toggleSfChip(this)">Guard</button>
+        <button class="sf-chip" data-group="skill" data-val="Cleaner"         onclick="toggleSfChip(this)">Cleaner</button>
+        <button class="sf-chip" data-group="skill" data-val="Gardener"        onclick="toggleSfChip(this)">Gardener</button>
+        <button class="sf-chip" data-group="skill" data-val="Carpenter"       onclick="toggleSfChip(this)">Carpenter</button>
+        <button class="sf-chip" data-group="skill" data-val="Welder"          onclick="toggleSfChip(this)">Welder</button>
+      </div>
+      <div class="sf-row">
         <span class="sf-label">More</span>
         <button class="sf-chip" data-group="flag" data-val="avail"    onclick="toggleSfChip(this)">Available only</button>
         <button class="sf-chip" data-group="flag" data-val="verified" onclick="toggleSfChip(this)">Verified workers</button>
@@ -424,6 +435,10 @@
           <input type="text" id="signup-phone" placeholder="+250 788 000 000" autocomplete="tel">
         </div>
         <div class="form-group">
+          <label>Email address <span style="font-size:11px;color:var(--t3)">(for verification)</span></label>
+          <input type="email" id="signup-email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="form-group">
           <label data-i18n="label_location">Location</label>
           <select id="signup-loc">
             <option>Gasabo, Kigali</option><option>Kicukiro, Kigali</option>
@@ -461,21 +476,70 @@
     <!-- FORGOT PASSWORD VIEW -->
     <div id="auth-forgot-view" style="display:none">
       <div class="modal-header">
-        <div class="modal-title" data-i18n="forgot_title">Reset your password</div>
+        <div class="modal-title">Reset your password</div>
         <button class="modal-close" onclick="document.getElementById('modal-auth').classList.add('hidden')">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="auth-success" id="forgot-success"></div>
-        <div class="auth-error"   id="forgot-error"></div>
-        <p style="font-size:13px;color:var(--t2);margin-bottom:14px" data-i18n="forgot_desc">Enter your phone number or email and we'll send you a reset code.</p>
+        <div class="auth-error" id="forgot-error"></div>
+        <!-- Step 1: request code -->
+        <div id="forgot-step1">
+          <p style="font-size:13px;color:var(--t2);margin-bottom:14px">Enter your phone number or email and we'll send you a reset code.</p>
+          <div class="form-group">
+            <label>Phone or email</label>
+            <input type="text" id="forgot-phone" placeholder="+250 788 000 000" autocomplete="off" name="forgot-ph"
+                   onkeydown="if(event.key==='Enter')doForgot()">
+          </div>
+        </div>
+        <!-- Step 2: enter code + new password (hidden until step 1 succeeds) -->
+        <div id="forgot-step2" style="display:none">
+          <div class="auth-success" id="forgot-code-hint" style="display:block;margin-bottom:12px"></div>
+          <div class="form-group">
+            <label>Reset code</label>
+            <input type="text" id="forgot-code" placeholder="6-digit code" autocomplete="off" name="forgot-code"
+                   style="letter-spacing:4px;font-size:18px;text-align:center">
+          </div>
+          <div class="form-group">
+            <label>New password</label>
+            <input type="password" id="forgot-newpw" placeholder="At least 6 characters" autocomplete="new-password"
+                   onkeydown="if(event.key==='Enter')doResetPassword()">
+          </div>
+          <div class="form-group">
+            <label>Confirm new password</label>
+            <input type="password" id="forgot-newpw2" placeholder="Repeat new password" autocomplete="new-password"
+                   onkeydown="if(event.key==='Enter')doResetPassword()">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" id="forgot-footer-step1">
+        <button class="btn" onclick="switchAuthView('login')">Back</button>
+        <button class="btn btn-primary" onclick="doForgot()">Send reset code</button>
+      </div>
+      <div class="modal-footer" id="forgot-footer-step2" style="display:none">
+        <button class="btn" onclick="resetForgotToStep1()">Back</button>
+        <button class="btn btn-primary" onclick="doResetPassword()">Set new password</button>
+      </div>
+    </div>
+
+    <!-- VERIFY EMAIL VIEW -->
+    <div id="auth-verify-view" style="display:none">
+      <div class="modal-header">
+        <div class="modal-title">Verify your email</div>
+        <button class="modal-close" onclick="document.getElementById('modal-auth').classList.add('hidden')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="auth-error"   id="verify-error"></div>
+        <div class="auth-success" id="verify-success"></div>
+        <div id="verify-hint" style="font-size:13px;color:var(--t2);margin-bottom:14px"></div>
         <div class="form-group">
-          <label data-i18n="label_phone">Phone or email</label>
-          <input type="text" id="forgot-phone" placeholder="+250 788 000 000" autocomplete="off" name="forgot-ph">
+          <label>Verification code</label>
+          <input type="text" id="verify-code" placeholder="6-character code" autocomplete="off" name="verify-c"
+                 style="letter-spacing:4px;font-size:18px;text-align:center;text-transform:uppercase"
+                 onkeydown="if(event.key==='Enter')doVerifyEmail()">
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn" onclick="switchAuthView('login')" data-i18n="btn_back">Back</button>
-        <button class="btn btn-primary" onclick="doForgot()" data-i18n="btn_send_code">Send reset code</button>
+        <button class="btn" onclick="document.getElementById('modal-auth').classList.add('hidden')">Later</button>
+        <button class="btn btn-primary" onclick="doVerifyEmail()">Verify email</button>
       </div>
     </div>
 
@@ -529,6 +593,32 @@ const T = {
     btn_search:"Search", label_title:"Title", label_rent:"Monthly rent (RWF)",
     label_bedrooms:"Bedrooms", label_desc:"Description", label_features:"Included features",
     btn_publish:"Publish listing", search_placeholder:"Search houses, workers…",
+    // index
+    home_featured_houses:"Featured houses near you", home_see_all_houses:"See all house listings →",
+    home_landlord_q:"Are you a landlord?", home_post_house_cta:"Post a house listing",
+    home_workers_title:"Workers available now", home_see_all_workers:"See all workers →",
+    home_browse_houses:"Browse all houses", home_post_listing:"Post a listing",
+    home_landlord_desc:"List your house and reach thousands of renters across Rwanda. Free & takes 2 minutes.",
+    // workers
+    workers_search_ph:"Name or skill...", filter_all_skills:"All skills",
+    chip_avail:"Available", chip_verified:"Verified only", chip_top:"Top rated",
+    workers_all:"All workers",
+    // houses
+    houses_search_ph:"Search location or title...", filter_any_rooms:"Any bedrooms",
+    chip_avail_only:"Available only", all_listings:"All listings", post_house_btn:"+ Post a house",
+    // post house
+    post_house_title:"Post a house listing", label_photos:"Photos of the house",
+    upload_photos:"Tap to upload house photos", label_landlord:"Landlord name",
+    label_landlord_ph:"Your full name",
+    // messages
+    page_messages:"Messages", new_convo:"New conversation", msg_input_ph:"Type a message…",
+    // notifications
+    mark_all_read:"Mark all read", no_notifs:"No notifications yet.",
+    // dashboards
+    dash_worker:"Worker dashboard", tab_jobs:"Job requests", tab_verification:"Verification", tab_activity:"Activity",
+    dash_employer:"Employer dashboard", tab_listings:"My listings", tab_hired:"Hired workers",
+    // profiles
+    send_message:"Send message", write_review:"Write a review", back_workers:"← Back to workers",
   },
   rw: {
     nav_home:"Ahabanza", nav_houses:"Inzu", nav_workers:"Abakozi",
@@ -559,6 +649,24 @@ const T = {
     btn_search:"Shakisha", label_title:"Umutwe", label_rent:"Igiciro (RWF/ukwezi)",
     label_bedrooms:"Ibiturari", label_desc:"Ibisobanuro", label_features:"Ivyo birimo",
     btn_publish:"Tanga urutonde", search_placeholder:"Shakisha inzu, abakozi…",
+    home_featured_houses:"Inzu zibonetse hafi yawe", home_see_all_houses:"Reba inzu zose →",
+    home_landlord_q:"Urakodesha inzu?", home_post_house_cta:"Ohereza inzu yawe",
+    home_workers_title:"Abakozi babonetse ubu", home_see_all_workers:"Reba abakozi bose →",
+    home_browse_houses:"Reba inzu zose", home_post_listing:"Ohereza inzu",
+    home_landlord_desc:"Shyira inzu yawe kuri Ndangiranet maze ubone abakodesha benshi mu Rwanda. Birasohoka kandi bitoroshye.",
+    workers_search_ph:"Izina cyangwa ubuhanga...", filter_all_skills:"Ubuhanga bwose",
+    chip_avail:"Zibonetse", chip_verified:"Emejwe gusa", chip_top:"Baguye hejuru",
+    workers_all:"Abakozi bose",
+    houses_search_ph:"Shakisha aho cyangwa umutwe...", filter_any_rooms:"Ibiturari byose",
+    chip_avail_only:"Zibonetse gusa", all_listings:"Urutonde rwose", post_house_btn:"+ Ohereza inzu",
+    post_house_title:"Ohereza inzu yawe", label_photos:"Amafoto y'inzu",
+    upload_photos:"Kanda hano usubikemo amafoto y'inzu", label_landlord:"Amazina y'umunyagihugunguru",
+    label_landlord_ph:"Amazina yawe yose",
+    page_messages:"Ubutumwa", new_convo:"Ikiganiro gishya", msg_input_ph:"Andika ubutumwa…",
+    mark_all_read:"Soma byose", no_notifs:"Nta makuru arahari.",
+    dash_worker:"Ikibaho cy'umukozi", tab_jobs:"Ibisabwa", tab_verification:"Kwemeza", tab_activity:"Ibikorwa",
+    dash_employer:"Ikibaho cy'umukoresha", tab_listings:"Urutonde rwanjye", tab_hired:"Abakozi nakuye",
+    send_message:"Ohereza ubutumwa", write_review:"Andika ikizamini", back_workers:"← Subira ku bakozi",
   },
   fr: {
     nav_home:"Accueil", nav_houses:"Maisons", nav_workers:"Travailleurs",
@@ -589,6 +697,24 @@ const T = {
     btn_search:"Rechercher", label_title:"Titre", label_rent:"Loyer (RWF/mois)",
     label_bedrooms:"Chambres", label_desc:"Description", label_features:"Équipements inclus",
     btn_publish:"Publier l'annonce", search_placeholder:"Chercher maisons, travailleurs…",
+    home_featured_houses:"Maisons vedettes près de vous", home_see_all_houses:"Voir toutes les maisons →",
+    home_landlord_q:"Êtes-vous propriétaire?", home_post_house_cta:"Publier une annonce",
+    home_workers_title:"Travailleurs disponibles maintenant", home_see_all_workers:"Voir tous les travailleurs →",
+    home_browse_houses:"Voir toutes les maisons", home_post_listing:"Publier une annonce",
+    home_landlord_desc:"Listez votre maison sur Ndangiranet et touchez des milliers de locataires au Rwanda. Gratuit et rapide.",
+    workers_search_ph:"Nom ou compétence...", filter_all_skills:"Toutes compétences",
+    chip_avail:"Disponibles", chip_verified:"Vérifiés seulement", chip_top:"Mieux notés",
+    workers_all:"Tous les travailleurs",
+    houses_search_ph:"Rechercher lieu ou titre...", filter_any_rooms:"Toutes chambres",
+    chip_avail_only:"Disponibles seulement", all_listings:"Toutes les annonces", post_house_btn:"+ Publier maison",
+    post_house_title:"Publier une annonce", label_photos:"Photos de la maison",
+    upload_photos:"Appuyez pour télécharger des photos", label_landlord:"Nom du propriétaire",
+    label_landlord_ph:"Votre nom complet",
+    page_messages:"Messages", new_convo:"Nouvelle conversation", msg_input_ph:"Écrire un message…",
+    mark_all_read:"Tout marquer comme lu", no_notifs:"Aucune notification pour l'instant.",
+    dash_worker:"Tableau de bord travailleur", tab_jobs:"Demandes d'emploi", tab_verification:"Vérification", tab_activity:"Activité",
+    dash_employer:"Tableau de bord employeur", tab_listings:"Mes annonces", tab_hired:"Travailleurs engagés",
+    send_message:"Envoyer un message", write_review:"Écrire un avis", back_workers:"← Retour aux travailleurs",
   }
 };
 
@@ -676,9 +802,13 @@ function handleNavSearch(e) { if (e.key === "Enter") doNavSearch(); }
 
 function toggleSfChip(btn) {
   const group = btn.dataset.group;
-  // single-select per group
   document.querySelectorAll(`.sf-chip[data-group="${group}"]`).forEach(b => b.classList.remove("on"));
   btn.classList.add("on");
+  if (group === "skill") {
+    document.querySelectorAll('.sf-chip[data-group="type"]').forEach(b => b.classList.remove("on"));
+    const wc = document.querySelector('.sf-chip[data-group="type"][data-val="workers"]');
+    if (wc) wc.classList.add("on");
+  }
 }
 
 function clearFilters() {
@@ -695,19 +825,20 @@ function doNavSearch() {
   const loc   = document.querySelector('.sf-chip[data-group="loc"].on')?.dataset.val   || "";
   const price = document.querySelector('.sf-chip[data-group="price"].on')?.dataset.val || "";
   const flag  = document.querySelector('.sf-chip[data-group="flag"].on')?.dataset.val  || "";
+  const skill = document.querySelector('.sf-chip[data-group="skill"].on')?.dataset.val || "";
 
   const params = new URLSearchParams();
   if (q)     params.set("q", q);
   if (loc)   params.set("loc", loc.toLowerCase());
   if (price) params.set("price", price);
+  if (skill) params.set("skill", skill.toLowerCase());
   if (flag === "avail")    params.set("avail", "true");
   if (flag === "verified") params.set("verified", "true");
   if (flag === "top")      params.set("top", "true");
 
-  if (type === "workers") {
+  if (type === "workers" || skill) {
     window.location.href = "/workers?" + params.toString();
   } else if (type === "both") {
-    // go to houses with q, workers opens in second tab
     if (q) window.open("/workers?" + params.toString(), "_blank");
     window.location.href = "/houses?" + params.toString();
   } else {
@@ -724,7 +855,7 @@ function openAuth(view) {
 }
 
 function switchAuthView(view) {
-  ["login","signup","forgot"].forEach(v => {
+  ["login","signup","forgot","verify"].forEach(v => {
     document.getElementById("auth-"+v+"-view").style.display = v===view ? "" : "none";
   });
   // clear errors
@@ -793,16 +924,26 @@ async function doSignup() {
     ? Array.from(document.querySelectorAll("#skills-grid .skill-chip.selected")).map(b=>b.textContent)
     : [];
 
+  const email = document.getElementById("signup-email").value.trim();
+
   const res = await fetch("/api/auth/signup", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({ name, age:parseInt(age)||0, phone, location:loc, role, skills, password:pw }),
+    body: JSON.stringify({ name, age:parseInt(age)||0, phone, email, location:loc, role, skills, password:pw }),
   });
   const data = await res.json();
 
   if (res.ok) {
     localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-    document.getElementById("modal-auth").classList.add("hidden");
+    if (data.verify_token) {
+      switchAuthView("verify");
+      document.getElementById("verify-hint").innerHTML =
+        `A verification code was generated for <strong>${email}</strong>.<br>` +
+        `<span style="background:var(--bg2);padding:2px 10px;border-radius:6px;font-family:monospace;font-size:15px;letter-spacing:3px">${data.verify_token}</span>` +
+        `<br><span style="font-size:11px;color:var(--t3)">(In production this would be emailed to you.)</span>`;
+    } else {
+      document.getElementById("modal-auth").classList.add("hidden");
+    }
     applyAuthState();
   } else {
     showErr(err, data.error || "Sign up failed. Please try again.");
@@ -812,20 +953,69 @@ async function doSignup() {
 // ── FORGOT PASSWORD ──────────────────────────────────────────────────────────
 async function doForgot() {
   const phone = document.getElementById("forgot-phone").value.trim();
-  const err = document.getElementById("forgot-error");
-  const suc = document.getElementById("forgot-success");
+  const err   = document.getElementById("forgot-error");
   if (!phone) { showErr(err, "Please enter your phone number or email."); return; }
-  const res = await fetch("/api/auth/forgot", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({ phone }),
-  });
+  const res  = await fetch("/api/auth/forgot", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({phone}) });
   const data = await res.json();
   if (res.ok) {
-    suc.textContent = data.message || "Reset code sent! Check your phone.";
-    suc.classList.add("show");
+    document.getElementById("forgot-step1").style.display        = "none";
+    document.getElementById("forgot-footer-step1").style.display = "none";
+    document.getElementById("forgot-step2").style.display        = "";
+    document.getElementById("forgot-footer-step2").style.display = "";
+    const hint = document.getElementById("forgot-code-hint");
+    hint.textContent = data.message + (data.demo_code ? ` Demo code: ${data.demo_code}` : "");
+    hint.classList.add("show");
   } else {
     showErr(err, data.error || "Could not find that account.");
+  }
+}
+
+function resetForgotToStep1() {
+  document.getElementById("forgot-step1").style.display        = "";
+  document.getElementById("forgot-footer-step1").style.display = "";
+  document.getElementById("forgot-step2").style.display        = "none";
+  document.getElementById("forgot-footer-step2").style.display = "none";
+  document.getElementById("forgot-code-hint").classList.remove("show");
+}
+
+async function doResetPassword() {
+  const token  = document.getElementById("forgot-code").value.trim();
+  const pw     = document.getElementById("forgot-newpw").value.trim();
+  const pw2    = document.getElementById("forgot-newpw2").value.trim();
+  const err    = document.getElementById("forgot-error");
+  if (!token)    { showErr(err, "Please enter the reset code."); return; }
+  if (!pw)       { showErr(err, "Please enter a new password."); return; }
+  if (pw !== pw2){ showErr(err, "Passwords do not match."); return; }
+  if (pw.length < 6) { showErr(err, "Password must be at least 6 characters."); return; }
+  const res  = await fetch("/api/auth/reset-password", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({token, password:pw}) });
+  const data = await res.json();
+  if (res.ok) {
+    resetForgotToStep1();
+    switchAuthView("login");
+    const suc = document.getElementById("login-success");
+    suc.textContent = data.message || "Password updated! Please sign in.";
+    suc.classList.add("show");
+  } else {
+    showErr(err, data.error || "Reset failed. Please try again.");
+  }
+}
+
+// ── EMAIL VERIFICATION ────────────────────────────────────────────────────────
+async function doVerifyEmail() {
+  const token = document.getElementById("verify-code").value.trim().toUpperCase();
+  const err   = document.getElementById("verify-error");
+  const suc   = document.getElementById("verify-success");
+  if (!token) { showErr(err, "Please enter the verification code."); return; }
+  const res  = await fetch("/api/auth/verify-email", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({token}) });
+  const data = await res.json();
+  if (res.ok) {
+    suc.textContent = data.message || "Email verified!";
+    suc.classList.add("show");
+    const u = JSON.parse(localStorage.getItem(USER_KEY) || "{}");
+    if (u) { u.email_verified = true; localStorage.setItem(USER_KEY, JSON.stringify(u)); }
+    setTimeout(() => document.getElementById("modal-auth").classList.add("hidden"), 1800);
+  } else {
+    showErr(err, data.error || "Verification failed.");
   }
 }
 

@@ -2,7 +2,7 @@
 {% block title %}{{ worker.name }}{% endblock %}
 {% block content %}
 <div class="container" style="max-width:680px">
-  <div style="margin-bottom:14px"><a href="{{ url_for('workers') }}" class="btn" style="font-size:12px">&larr; Back to workers</a></div>
+  <div style="margin-bottom:14px"><a href="{{ url_for('workers') }}" class="btn" style="font-size:12px" data-i18n="back_workers">← Back to workers</a></div>
 
   <div class="card" style="margin-bottom:16px">
     <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
@@ -29,8 +29,8 @@
       </div>
     </div>
     <div style="display:flex;gap:10px;margin-top:16px">
-      <a href="{{ url_for('messages') }}" class="btn btn-primary" style="flex:1;justify-content:center;text-decoration:none">Send message</a>
-      <button class="btn" style="flex:1" onclick="document.getElementById('modal-review').classList.remove('hidden')">Write a review</button>
+      <a href="{{ url_for('messages') }}?worker={{ worker.id }}" class="btn btn-primary" style="flex:1;justify-content:center;text-decoration:none" data-i18n="send_message">Send message</a>
+      <button class="btn" style="flex:1" onclick="document.getElementById('modal-review').classList.remove('hidden')" data-i18n="write_review">Write a review</button>
     </div>
   </div>
 
